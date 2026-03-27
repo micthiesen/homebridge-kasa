@@ -1,37 +1,34 @@
 <!-- markdownlint-disable MD033 -->
 
-# homebridge-tplink-smarthome
+# homebridge-kasa
 
-[![NPM Version](https://img.shields.io/npm/v/homebridge-tplink-smarthome.svg)](https://www.npmjs.com/package/homebridge-tplink-smarthome)
-[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+[![NPM Version](https://img.shields.io/npm/v/homebridge-kasa.svg)](https://www.npmjs.com/package/homebridge-kasa)
 
-TPLink Smart Home Plugin for [Homebridge](https://github.com/nfarina/homebridge). (formerly `homebridge-hs100`)
+Kasa smart home plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
-## Looking for Maintainer
+Originally forked from [plasticrake/homebridge-tplink-smarthome](https://github.com/plasticrake/homebridge-tplink-smarthome).
 
-I haven't actively used Homebridge or TP-Link devices in several years and lack the time and resources to test or maintain this project properly.
+## Supported Protocols
 
-I'm open to transferring repository ownership to an individual or organization with a strong track record in open-source contributions. Alternatively, anyone is welcome to fork the project under the MIT license. If you maintain an active fork, feel free to reach out so I can add a link here for others to find it.
-
-Please see [this discussion](https://github.com/plasticrake/homebridge-tplink-smarthome/discussions/380).
+- **Legacy XOR** - UDP/TCP on port 9999 (classic Kasa devices)
+- **KLAP v2** - HTTP-based with AES-encrypted sessions (newer firmware)
+- **AES** - HTTP-based with AES-CBC via RSA handshake (Tapo-protocol devices)
 
 ## Models Supported
 
-- **Plugs:** EP25, EP40, HS100, HS103, HS105, HS107, HS110, HS300, KP105, KP115, KP303, KP400
+- **Plugs:** EP25, EP40, HS100, HS103, HS105, HS107, HS110, HS300, KP105, KP115, KP125M, KP303, KP400
 - **Switches:** ES20M, HS200, HS210, HS220, HS230
 - **Bulbs:** KL50, KL120, KL125, LB100, LB110, LB120, LB130, LB200, LB230
 - **Lightstrips:** KL400, KL430
 
-More models may be supported than listed. If you have another model working please let me know so I can add here.
-
-**Tapo devices are not supported and are out of scope with this plugin.**
+More models may be supported than listed. If you have another model working please let me know so I can add it here.
 
 ## HomeKit
 
 | Model                                           | Service   | Characteristics                                                                                                                                                                                    |
 | ----------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | HS100, HS103, HS105, HS107, KP105, KP303, KP400 | Outlet    | On<br/>OutletInUse (based on On state)                                                                                                                                                             |
-| HS110, HS300, KP115                             | Outlet    | On<br/>OutletInUse (based on energy monitoring)<br/>Volts (Custom)<br/>Amperes (Custom)<br/>Watts (Custom)<br/>VoltAmperes (Custom)<br/>KilowattHours (Custom)<br/>KilowattVoltAmpereHour (Custom) |
+| HS110, HS300, KP115, KP125M                     | Outlet    | On<br/>OutletInUse (based on energy monitoring)<br/>Volts (Custom)<br/>Amperes (Custom)<br/>Watts (Custom)<br/>VoltAmperes (Custom)<br/>KilowattHours (Custom)<br/>KilowattVoltAmpereHour (Custom) |
 | EP25, EP40                                      | Outlet    | On<br/>OutletInUse (based on On state)                                                                                                                                                             |
 | HS200, HS210                                    | Switch    | On                                                                                                                                                                                                 |
 | HS220, HS230                                    | Lightbulb | On<br/>Brightness                                                                                                                                                                                  |
@@ -47,7 +44,7 @@ More models may be supported than listed. If you have another model working plea
 1. **Node v18 or greater is required.** Check by running: `node --version`
 2. Install Homebridge: ([instructions](https://github.com/homebridge/homebridge#installation))
 3. **Homebridge v1.6.0 or greater is required.** Check by running `homebridge --version`
-4. Install this plugin using: `npm install -g homebridge-tplink-smarthome`
+4. Install this plugin using: `npm install -g homebridge-kasa`
 5. Update your configuration file. See the sample below.
 
 ### Homebridge Config UI X Installation
@@ -56,7 +53,7 @@ Check out [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-
 
 ## Updating
 
-- `npm update -g homebridge-tplink-smarthome`
+- `npm update -g homebridge-kasa`
 
 ## Configuration
 
@@ -64,7 +61,7 @@ Check out [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-
 
 #### Minimal
 
-Most setups do not require any other configuration to get up and runing.
+Most setups do not require any other configuration to get up and running.
 
 ```json
 "platforms": [{
@@ -75,7 +72,7 @@ Most setups do not require any other configuration to get up and runing.
 
 #### All options with defaults
 
-See [config.ts](src/config.ts) for documention on these options. It is recommended to use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to setup the configuration if you don't want to manually edit JSON files.
+See [config.ts](src/config.ts) for documentation on these options. It is recommended to use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to setup the configuration if you don't want to manually edit JSON files.
 
 ```json
 "platforms": [{

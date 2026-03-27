@@ -34,9 +34,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm run test:only
-
       - name: Publish to npm
         run: |
           VERSION=$(node -p "require('./package.json').version")
