@@ -1,4 +1,4 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
+import { createRequire } from "node:module";
 
 import chalk from "chalk";
 import type {
@@ -15,19 +15,18 @@ import { APIEvent, Categories } from "homebridge"; // enum
 import { satisfies } from "semver";
 import type { Sysinfo } from "tplink-smarthome-api";
 import { Client } from "tplink-smarthome-api";
-import Characteristics from "./characteristics";
-import type { TplinkSmarthomeConfig } from "./config";
-import { parseConfig } from "./config";
-import type HomekitDevice from "./homekit-device";
-import create from "./homekit-device/create";
-import type { KlapBulb, KlapPlug } from "./klap";
-import { KlapDiscovery } from "./klap";
-import { PLATFORM_NAME, PLUGIN_NAME } from "./settings";
-import type { TplinkDevice } from "./utils";
-import { isObjectLike, lookup, lookupCharacteristicNameByUUID } from "./utils";
+import Characteristics from "./characteristics/index.js";
+import type { TplinkSmarthomeConfig } from "./config.js";
+import { parseConfig } from "./config.js";
+import create from "./homekit-device/create.js";
+import type HomekitDevice from "./homekit-device/index.js";
+import type { KlapBulb, KlapPlug } from "./klap/index.js";
+import { KlapDiscovery } from "./klap/index.js";
+import { PLATFORM_NAME, PLUGIN_NAME } from "./settings.js";
+import type { TplinkDevice } from "./utils.js";
+import { isObjectLike, lookup, lookupCharacteristicNameByUUID } from "./utils.js";
 
-// okay for reading json
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+const require = createRequire(import.meta.url);
 const packageConfig = require("../package.json");
 
 export type TplinkSmarthomeAccessoryContext = {
@@ -223,7 +222,6 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
           const device = acc.tplinkDevice;
           if (device.supportsEmeter) {
             this.log.debug(`getEmeterRealtime ${chalk.blue(`[${device.alias}]`)}`);
-            // eslint-disable-next-line no-await-in-loop
             await device.emeter.getRealtime().catch((reason) => {
               this.log.error("[%s] %s", device.alias, "emeter.getRealtime()");
               this.log.error(reason);

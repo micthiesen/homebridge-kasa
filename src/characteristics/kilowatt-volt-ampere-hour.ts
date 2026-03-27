@@ -1,7 +1,6 @@
 import type { WithUUID } from "homebridge";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Formats } from "homebridge"; // enum
-import type DefaultCharacteristicClass from "./types";
+import type DefaultCharacteristicClass from "./types.js";
 
 export default function kilowattVoltAmpereHours(
   DefaultCharacteristic: typeof DefaultCharacteristicClass,

@@ -1,7 +1,7 @@
 import type { API } from "homebridge";
-import TplinkSmarthomePlatform from "./platform";
-import { PLATFORM_NAME } from "./settings";
+import TplinkSmarthomePlatform from "./platform.js";
+import { PLATFORM_NAME } from "./settings.js";
 
-export = (api: API): void => {
+export default (api: API): void => {
   api.registerPlatform(PLATFORM_NAME, TplinkSmarthomePlatform);
 };

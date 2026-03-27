@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ConfigParseError, defaultConfig, parseConfig } from "../src/config";
+import { ConfigParseError, defaultConfig, parseConfig } from "../src/config.js";
 
 describe("config", () => {
   describe("parseConfig", () => {

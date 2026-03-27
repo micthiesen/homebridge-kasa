@@ -15,7 +15,7 @@ import {
   randomBytes,
 } from "node:crypto";
 
-import type { KasaCredentials } from "./types";
+import type { KasaCredentials } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

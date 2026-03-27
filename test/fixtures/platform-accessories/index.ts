@@ -1,10 +1,14 @@
-/// <reference types="../../types/node-persist" />
+/// <reference path="../../types/node-persist.d.ts" />
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   PlatformAccessory,
   type SerializedPlatformAccessory,
 } from "homebridge/lib/platformAccessory";
 import nodePersist from "node-persist";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 type SerializedPlatformAccessoryFixture = SerializedPlatformAccessory & {
   fixtureName?: string;

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 import { HAPStorage } from "hap-nodejs";
 import type { DynamicPlatformPlugin, PlatformPluginConstructor } from "homebridge";
@@ -7,13 +8,13 @@ import { Server } from "homebridge/lib/server";
 import { User } from "homebridge/lib/user";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PLATFORM_NAME, PLUGIN_NAME } from "../../src/settings";
+import { PLATFORM_NAME, PLUGIN_NAME } from "../../src/settings.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const platformIdentifier = `${PLUGIN_NAME}.${PLATFORM_NAME}`;
 
 function getPlugin(homebridgeServer: Server) {
-  // @ts-expect-error: Accessing private
-  const { pluginManager }: { pluginManager: PluginManager } = homebridgeServer;
+  const { pluginManager }: { pluginManager: PluginManager } = homebridgeServer as any;
   const plugin = pluginManager.getPluginForPlatform(platformIdentifier);
 
   return plugin;

@@ -1,13 +1,11 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-
 import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge"; // enum
 import type { Plug, PlugSysinfo } from "tplink-smarthome-api";
-import type { TplinkSmarthomeConfig } from "../config";
-import type TplinkSmarthomePlatform from "../platform";
-import type { TplinkSmarthomeAccessoryContext } from "../platform";
-import { deferAndCombine, getOrAddCharacteristic } from "../utils";
-import HomekitDevice from ".";
+import type { TplinkSmarthomeConfig } from "../config.js";
+import type TplinkSmarthomePlatform from "../platform.js";
+import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
+import { deferAndCombine, getOrAddCharacteristic } from "../utils.js";
+import HomekitDevice from "./index.js";
 
 export default class HomeKitDevicePlug extends HomekitDevice {
   private desiredPowerState?: boolean;

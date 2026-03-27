@@ -1,20 +1,18 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-
 import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge"; // enum
 import type { Bulb, LightState } from "tplink-smarthome-api";
 import type { BulbSysinfoLightState } from "tplink-smarthome-api/lib/bulb";
-import type { TplinkSmarthomeConfig } from "../config";
-import type TplinkSmarthomePlatform from "../platform";
-import type { TplinkSmarthomeAccessoryContext } from "../platform";
+import type { TplinkSmarthomeConfig } from "../config.js";
+import type TplinkSmarthomePlatform from "../platform.js";
+import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
 import {
   deferAndCombine,
   delay,
   getOrAddCharacteristic,
   kelvinToMired,
   miredToKelvin,
-} from "../utils";
-import HomekitDevice from ".";
+} from "../utils.js";
+import HomekitDevice from "./index.js";
 
 export default class HomeKitDeviceBulb extends HomekitDevice {
   private desiredLightState: LightState = {};
@@ -399,12 +397,10 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
         const origLs = await this.getLightState();
 
         for (let i = 0; i < 3; i += 1) {
-          /* eslint-disable no-await-in-loop */
           await this.setLightState({ on_off: 1, brightness: 100 });
           await delay(500);
           await this.setLightState({ on_off: 1, brightness: 10 });
           await delay(500);
-          /* eslint-enable no-await-in-loop */
         }
 
         this.setLightState(origLs);

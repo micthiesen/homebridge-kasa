@@ -1,5 +1,5 @@
 import type { WithUUID } from "homebridge";
-import type DefaultCharacteristicClass from "./types";
+import type DefaultCharacteristicClass from "./types.js";
 
 export default function voltAmperes(
   DefaultCharacteristic: typeof DefaultCharacteristicClass,

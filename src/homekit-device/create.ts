@@ -1,12 +1,12 @@
 import type { PlatformAccessory } from "homebridge";
 import type { Bulb, Plug } from "tplink-smarthome-api";
-import type { TplinkSmarthomeConfig } from "../config";
-import type TplinkSmarthomePlatform from "../platform";
-import type { TplinkSmarthomeAccessoryContext } from "../platform";
-import type { TplinkDevice } from "../utils";
-import type HomekitDevice from ".";
-import HomeKitDeviceBulb from "./bulb";
-import HomeKitDevicePlug from "./plug";
+import type { TplinkSmarthomeConfig } from "../config.js";
+import type TplinkSmarthomePlatform from "../platform.js";
+import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
+import type { TplinkDevice } from "../utils.js";
+import HomeKitDeviceBulb from "./bulb.js";
+import type HomekitDevice from "./index.js";
+import HomeKitDevicePlug from "./plug.js";
 
 /**
  * Factory method to create a HomeKitDeviceBulb or HomeKitDevicePlug.

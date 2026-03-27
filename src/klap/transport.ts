@@ -18,8 +18,8 @@ import {
   generateKlapRemoteAuthHash,
   klapDecrypt,
   klapEncrypt,
-} from "./crypto";
-import type { AesSessionState, KasaCredentials, KlapSessionState } from "./types";
+} from "./crypto.js";
+import type { AesSessionState, KasaCredentials, KlapSessionState } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -10,7 +10,7 @@ import type {
 import type { Bulb, Plug } from "tplink-smarthome-api";
 import type { Buildable } from "ts-essentials";
 
-import type { KlapBulb, KlapPlug } from "./klap";
+import type { KlapBulb, KlapPlug } from "./klap/index.js";
 
 export type TplinkDevice = Bulb | Plug | KlapPlug | KlapBulb;
 

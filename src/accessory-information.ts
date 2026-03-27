@@ -1,5 +1,5 @@
 import type { HAP, PlatformAccessory, Service } from "homebridge";
-import type HomekitDevice from "./homekit-device";
+import type HomekitDevice from "./homekit-device/index.js";
 
 export default function accessoryInformation(
   hap: HAP,

@@ -24,6 +24,7 @@
     "type": "git",
     "url": "git://github.com/micthiesen/homebridge-kasa.git"
   },
+  "type": "module",
   "license": "MIT",
   "author": "Michael Thiesen",
   "main": "lib/index.js",
@@ -35,10 +36,8 @@
     "prebuild": "pnpm run clean",
     "build": "tsc --project tsconfig.source.json",
     "clean": "rm -rf lib/ build/",
-    "clean:debug": "rimraf $PWD/test/homebridge/persist && pnpm run clean:debug:acc",
-    "clean:debug:acc": "rimraf $PWD/test/homebridge/accessories",
-    "clean:debugsim": "rimraf $PWD/test/homebridge-simulator/persist && pnpm run clean:debugsim:acc",
-    "clean:debugsim:acc": "rimraf $PWD/test/homebridge-simulator/accessories",
+    "clean:debug": "rm -rf $PWD/test/homebridge/persist $PWD/test/homebridge/accessories",
+    "clean:debugsim": "rm -rf $PWD/test/homebridge-simulator/persist $PWD/test/homebridge-simulator/accessories",
     "debug": "pnpm run build && pnpm run debug:only",
     "debug:only": "homebridge --debug --user-storage-path $PWD/test/homebridge --plugin-path .",
     "debugsim": "pnpm run build && pnpm run debugsim:only",
@@ -47,14 +46,11 @@
     "format": "biome format .",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
-    "release": "commit-and-tag-version --sign",
     "spellcheck": "cspell '{src,test}/**/*' *.md",
     "start": "homebridge --plugin-path .",
     "pretest": "pnpm run lint && pnpm run typecheck",
     "test": "pnpm run test:only",
-    "test:only": "vitest run",
-    "preversion": "pnpm test",
-    "postversion": "git push && git push --tags"
+    "test:only": "vitest run"
   },
   "dependencies": {
     "ajv": "^8.18.0",
@@ -73,13 +69,11 @@
     "@types/semver": "^7.7.1",
     "@biomejs/biome": "2.4.8",
     "@micthiesen/mitools": "^2",
-    "commit-and-tag-version": "^12.6.1",
     "cspell": "^9.7.0",
     "fs-extra": "^11.3.4",
     "hap-nodejs": "~0.14.1",
     "homebridge": "~1.11.2",
     "node-persist": "0.0.12",
-    "rewire": "^7.0.0",
     "tplink-smarthome-simulator": "^5.0.1",
     "ts-essentials": "^10.1.1",
     "typescript": "~6.0.2",
@@ -89,10 +83,5 @@
   "engines": {
     "homebridge": "^1.6.0 || ^2.0.0-beta.0",
     "node": ">=18"
-  },
-  "commit-and-tag-version": {
-    "scripts": {
-      "prerelease": "npm test"
-    }
   }
 }

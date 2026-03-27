@@ -1,8 +1,7 @@
 import type { CharacteristicProps } from "homebridge";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { Formats, Perms } from "homebridge"; // enum
 import type { MarkOptional } from "ts-essentials";
-import type DefaultCharacteristicClass from "./types";
+import type DefaultCharacteristicClass from "./types.js";
 
 export default function defaultCharacteristic(
   Characteristic: typeof DefaultCharacteristicClass,

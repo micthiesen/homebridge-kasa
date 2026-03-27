@@ -1,11 +1,11 @@
 import type { Characteristic as CharacteristicClass, WithUUID } from "homebridge";
-import AmperesImport from "./amperes";
-import DefaultCharacteristicImport from "./default-characteristic";
-import KilowattHoursImport from "./kilowatt-hours";
-import KilowattVoltAmpereHourImport from "./kilowatt-volt-ampere-hour";
-import VoltAmperesImport from "./volt-amperes";
-import VoltsImport from "./volts";
-import WattsImport from "./watts";
+import AmperesImport from "./amperes.js";
+import DefaultCharacteristicImport from "./default-characteristic.js";
+import KilowattHoursImport from "./kilowatt-hours.js";
+import KilowattVoltAmpereHourImport from "./kilowatt-volt-ampere-hour.js";
+import VoltAmperesImport from "./volt-amperes.js";
+import VoltsImport from "./volts.js";
+import WattsImport from "./watts.js";
 
 export default function characteristic(
   Characteristic: typeof CharacteristicClass,

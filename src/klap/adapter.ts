@@ -5,7 +5,7 @@ import type {
   EmeterRealtime,
   LightStateLike,
   PlugSysinfoLike,
-} from "./types";
+} from "./types.js";
 
 // Shared transport interface (both KlapTransport and AesTransport implement this)
 interface Transport {
@@ -312,12 +312,10 @@ export class KlapPlug extends EventEmitter {
   async blink(times = 5, rate = 1000): Promise<boolean> {
     const origState = this.relayState;
     for (let i = 0; i < times; i += 1) {
-      /* eslint-disable no-await-in-loop */
       await this.setPowerState(!origState);
       await delay(rate / 2);
       await this.setPowerState(origState);
       await delay(rate / 2);
-      /* eslint-enable no-await-in-loop */
     }
     return true;
   }
@@ -552,14 +550,12 @@ export class KlapBulb extends EventEmitter {
   async blink(times = 5, rate = 1000): Promise<boolean> {
     const origOnOff = this._sysInfo.light_state.on_off;
     for (let i = 0; i < times; i += 1) {
-      /* eslint-disable no-await-in-loop */
       await this.lighting.setLightState({
         on_off: origOnOff === 1 ? 0 : 1,
       });
       await delay(rate / 2);
       await this.lighting.setLightState({ on_off: origOnOff });
       await delay(rate / 2);
-      /* eslint-enable no-await-in-loop */
     }
     return true;
   }

@@ -1,5 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-
 import chalk from "chalk";
 import type {
   Categories,
@@ -14,12 +12,12 @@ import type {
 } from "homebridge";
 import { PlatformAccessoryEvent } from "homebridge"; // enum
 
-import AccessoryInformation from "../accessory-information";
-import type { TplinkSmarthomeConfig } from "../config";
-import type TplinkSmarthomePlatform from "../platform";
-import type { TplinkSmarthomeAccessoryContext } from "../platform";
-import type { TplinkDevice } from "../utils";
-import { prefixLogger } from "../utils";
+import AccessoryInformation from "../accessory-information.js";
+import type { TplinkSmarthomeConfig } from "../config.js";
+import type TplinkSmarthomePlatform from "../platform.js";
+import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
+import type { TplinkDevice } from "../utils.js";
+import { prefixLogger } from "../utils.js";
 
 export default abstract class HomekitDevice {
   readonly log: Logger;
@@ -54,7 +52,6 @@ export default abstract class HomekitDevice {
         `Creating new Accessory [${this.id}] [${uuid}] category: ${categoryName}`,
       );
 
-      // eslint-disable-next-line new-cap
       this.homebridgeAccessory = new platform.api.platformAccessory(
         this.name,
         uuid,
@@ -117,7 +114,6 @@ export default abstract class HomekitDevice {
     return this.tplinkDevice.alias;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   get manufacturer(): string {
     return "TP-Link";
   }

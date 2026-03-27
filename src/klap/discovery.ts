@@ -11,15 +11,15 @@ import { EventEmitter } from "node:events";
 import * as http from "node:http";
 import * as net from "node:net";
 
-import { KlapBulb, KlapPlug } from "./adapter";
-import { AesTransport, KlapTransport } from "./transport";
+import { KlapBulb, KlapPlug } from "./adapter.js";
+import { AesTransport, KlapTransport } from "./transport.js";
 import type {
   BulbSysinfoLike,
   DeviceSysinfo,
   KasaCredentials,
   PlugSysinfoLike,
   TransportType,
-} from "./types";
+} from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,16 +1,13 @@
 import { EventEmitter } from "node:events";
 import { HomebridgeAPI } from "homebridge/lib/api";
 import { beforeEach, describe, expect, it } from "vitest";
-// const rewire = require('rewire');
 
-import TplinkSmarthomePlatform from "../src/platform";
-
-// const { TplinkAccessory } = require('../lib/tplink-accessory');
+import TplinkSmarthomePlatform from "../src/platform.js";
 
 import {
   platformAccessories,
   platformAccessoriesIssues,
-} from "./fixtures/platform-accessories";
+} from "./fixtures/platform-accessories/index.js";
 
 const log = () => {};
 log.prefix = "";
@@ -28,7 +25,7 @@ describe("TplinkSmarthomePlatform", () => {
     platform = new TplinkSmarthomePlatform(
       log,
       { platform: "", name: "tplink" },
-      new HomebridgeAPI(),
+      new HomebridgeAPI() as any,
     );
 
     tplinkDevice = new EventEmitter();
@@ -60,7 +57,7 @@ describe("TplinkSmarthomePlatform", () => {
     platformAccessories.forEach((platformAccessory) => {
       describe(platformAccessory.displayName, () => {
         it("should add platformAccessory to #configuredAccessories", () => {
-          platform.configureAccessory(platformAccessory);
+          platform.configureAccessory(platformAccessory as any);
 
           // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
           const hbAccessories = platform["configuredAccessories"];
@@ -75,7 +72,7 @@ describe("TplinkSmarthomePlatform", () => {
     describe("Context Missing", () => {
       it("should add platformAccessory to #configuredAccessories", () => {
         const platformAccessory = platformAccessoriesIssues.get("CONTEXT_MISSING");
-        platform.configureAccessory(platformAccessory);
+        platform.configureAccessory(platformAccessory as any);
 
         // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
         const hbAccessories = platform["configuredAccessories"];
