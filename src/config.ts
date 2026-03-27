@@ -138,6 +138,18 @@ export interface TplinkSmarthomeConfigInput {
    * You probably don't want to change this.
    */
   devicesUseDiscoveryPort?: boolean;
+
+  // ==================
+  // Kasa Account (for KLAP/AES devices)
+  // ------------------
+  /**
+   * Kasa/TP-Link account email. Required for newer devices using KLAP v2 or AES protocol.
+   */
+  kasaUsername?: string;
+  /**
+   * Kasa/TP-Link account password. Required for newer devices using KLAP v2 or AES protocol.
+   */
+  kasaPassword?: string;
 }
 
 type TplinkSmarthomeConfigDefault = {
@@ -187,6 +199,11 @@ export type TplinkSmarthomeConfig = {
     macAddresses?: Array<string>;
     excludeMacAddresses?: Array<string>;
     devices?: Array<{ host: string; port?: number | undefined }>;
+  };
+
+  kasaCredentials?: {
+    username: string;
+    password: string;
   };
 };
 
@@ -261,7 +278,13 @@ function isTplinkSmarthomeConfigInput(
     (!('transport' in c) ||
       typeof c.transport === 'string' ||
       c.transport === undefined) &&
-    (!('waitTimeUpdate' in c) || typeof c.waitTimeUpdate === 'number')
+    (!('waitTimeUpdate' in c) || typeof c.waitTimeUpdate === 'number') &&
+    (!('kasaUsername' in c) ||
+      typeof c.kasaUsername === 'string' ||
+      c.kasaUsername === undefined) &&
+    (!('kasaPassword' in c) ||
+      typeof c.kasaPassword === 'string' ||
+      c.kasaPassword === undefined)
   );
 }
 
@@ -310,5 +333,10 @@ export function parseConfig(
       excludeMacAddresses: c.excludeMacAddresses,
       devices: c.devices,
     },
+
+    kasaCredentials:
+      typeof c.kasaUsername === 'string' && typeof c.kasaPassword === 'string'
+        ? { username: c.kasaUsername, password: c.kasaPassword }
+        : undefined,
   };
 }

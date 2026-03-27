@@ -27,3 +27,5 @@ node_modules
 .node_repl_history
 
 .specs/
+.env
+/test-*

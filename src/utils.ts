@@ -10,7 +10,9 @@ import type {
 import type { Bulb, Plug } from 'tplink-smarthome-api';
 import type { Buildable } from 'ts-essentials';
 
-export type TplinkDevice = Bulb | Plug;
+import type { KlapPlug, KlapBulb } from './klap';
+
+export type TplinkDevice = Bulb | Plug | KlapPlug | KlapBulb;
 
 export function isObjectLike(
   candidate: unknown

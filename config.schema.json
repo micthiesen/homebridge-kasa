@@ -137,6 +137,18 @@
         "description": "When true, sets the device port to the port the device used when responding to the discovery ping. When false, always uses default port (9999). You probably don't want to change this.",
         "type": "boolean",
         "default": false
+      },
+      "kasaUsername": {
+        "title": "Kasa Username",
+        "type": "string",
+        "description": "Your TP-Link Kasa account email. Required to discover newer devices (e.g. KP125M, firmware-updated HS103) that use the KLAP/AES protocol.",
+        "placeholder": "you@example.com"
+      },
+      "kasaPassword": {
+        "title": "Kasa Password",
+        "type": "string",
+        "description": "Your TP-Link Kasa account password.",
+        "placeholder": "password"
       }
     }
   },
@@ -160,6 +172,19 @@
             "type": "string",
             "required": true
           }
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Kasa Account (Optional)",
+      "description": "Required for newer devices that use the KLAP/AES protocol (e.g. KP125M, firmware-updated HS103). Without credentials, only legacy devices on port 9999 will be discovered.",
+      "expandable": true,
+      "items": [
+        "kasaUsername",
+        {
+          "key": "kasaPassword",
+          "type": "password"
         }
       ]
     },

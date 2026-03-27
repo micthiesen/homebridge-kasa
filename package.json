@@ -1,7 +1,7 @@
 {
   "name": "homebridge-kasa",
   "displayName": "Homebridge Kasa",
-  "version": "8.0.5",
+  "version": "9.0.0",
   "description": "Kasa smart home plugin for Homebridge. Supports devices using Legacy XOR, KLAP v2, and AES protocols.",
   "keywords": [
     "homebridge-plugin",
@@ -48,7 +48,7 @@
     "spellcheck": "cspell '{src,test}/**/*' *.md",
     "start": "homebridge --plugin-path .",
     "pretest": "pnpm run lint",
-    "test": "npm run test:only",
+    "test": "pnpm run test:only",
     "test:only": "jest",
     "preversion": "pnpm test",
     "postversion": "git push && git push --tags"
