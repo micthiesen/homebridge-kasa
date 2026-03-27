@@ -1,7 +1,7 @@
 {
   "name": "homebridge-kasa",
   "displayName": "Homebridge Kasa",
-  "version": "9.0.1",
+  "version": "9.0.2",
   "description": "Kasa smart home plugin for Homebridge. Supports devices using Legacy XOR, KLAP v2, and AES protocols.",
   "keywords": [
     "homebridge-plugin",
