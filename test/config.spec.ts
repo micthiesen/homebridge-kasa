@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { ConfigParseError, defaultConfig, parseConfig } from "../src/config";
 
 describe("config", () => {
@@ -39,9 +41,10 @@ describe("config", () => {
     it("should throw ConfigParseError with incorrect types", () => {
       expect(() => {
         parseConfig(configInvalid);
-      })
-        .toThrow(ConfigParseError)
-        .toThrow("must be");
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        parseConfig(configInvalid);
+      }).toThrow("must be");
     });
 
     it("should throw ConfigParseError with incorrect devices", () => {
@@ -49,35 +52,47 @@ describe("config", () => {
         parseConfig({
           devices: [{ host: 123 }],
         });
-      })
-        .toThrow(ConfigParseError)
-        .toThrow("`devices/0/host` must be string");
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        parseConfig({
+          devices: [{ host: 123 }],
+        });
+      }).toThrow("`devices/0/host` must be string");
 
       expect(() => {
         parseConfig({
           devices: [{ port: 123 }],
         });
-      })
-        .toThrow(ConfigParseError)
-        .toThrow(
-          "`devices/0` must have required property 'host'\n`devices/0/port` must be string",
-        );
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        parseConfig({
+          devices: [{ port: 123 }],
+        });
+      }).toThrow(
+        "`devices/0` must have required property 'host'\n`devices/0/port` must be string",
+      );
 
       expect(() => {
         parseConfig({
           devices: [{ badHost: "host" }],
         });
-      })
-        .toThrow(ConfigParseError)
-        .toThrow("`devices/0` must have required property 'host'");
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        parseConfig({
+          devices: [{ badHost: "host" }],
+        });
+      }).toThrow("`devices/0` must have required property 'host'");
 
       expect(() => {
         parseConfig({
           devices: [{ badHost: "host" }],
         });
-      })
-        .toThrow(ConfigParseError)
-        .toThrow("`devices/0` must have required property 'host'");
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        parseConfig({
+          devices: [{ badHost: "host" }],
+        });
+      }).toThrow("`devices/0` must have required property 'host'");
     });
   });
 });

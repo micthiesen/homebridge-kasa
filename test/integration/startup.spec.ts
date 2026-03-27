@@ -5,6 +5,7 @@ import type { DynamicPlatformPlugin, PlatformPluginConstructor } from "homebridg
 import type { PluginManager } from "homebridge/lib/pluginManager";
 import { Server } from "homebridge/lib/server";
 import { User } from "homebridge/lib/user";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PLATFORM_NAME, PLUGIN_NAME } from "../../src/settings";
 
@@ -73,7 +74,7 @@ describe("homebridge", () => {
 
       afterEach(() => {
         homebridgeServer.teardown();
-        jest.resetAllMocks();
+        vi.resetAllMocks();
       });
 
       it("plugin was loaded", () => {

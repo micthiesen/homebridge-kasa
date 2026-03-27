@@ -1,16 +1,17 @@
 import { Service } from "hap-nodejs";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { deferAndCombine, delay, isObjectLike, lookup } from "../src/utils";
 
 describe("utils", () => {
   describe("deferAndCombine", () => {
-    let spy: jest.Mock;
+    let spy: Mock;
     let deferredFn: () => Promise<unknown>;
     const deferTime = 100;
 
     beforeEach(() => {
       let index = 0;
-      spy = jest.fn();
+      spy = vi.fn();
       deferredFn = deferAndCombine(() => {
         index += 1;
         return new Promise((resolve) => {

@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { HomebridgeAPI } from "homebridge/lib/api";
+import { beforeEach, describe, expect, it } from "vitest";
 // const rewire = require('rewire');
 
 import TplinkSmarthomePlatform from "../src/platform";
