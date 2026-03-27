@@ -44,7 +44,6 @@
     "debugsim": "pnpm run build && pnpm run debugsim:only",
     "debugsim:only": "homebridge --debug --user-storage-path $PWD/test/homebridge-simulator --plugin-path .",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts . && tsc --noEmit",
-    "prepare": "pnpm run build",
     "release": "commit-and-tag-version --sign",
     "spellcheck": "cspell '{src,test}/**/*' *.md",
     "start": "homebridge --plugin-path .",
