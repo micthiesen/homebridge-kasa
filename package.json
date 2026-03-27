@@ -82,7 +82,7 @@
     "rewire": "^7.0.0",
     "tplink-smarthome-simulator": "^5.0.1",
     "ts-essentials": "^10.1.1",
-    "typescript": "~5.3.3",
+    "typescript": "~6.0.2",
     "vitest": "^4.1.1"
   },
   "packageManager": "pnpm@10.28.2",
