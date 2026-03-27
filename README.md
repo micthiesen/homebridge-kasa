@@ -59,14 +59,27 @@ Check out [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-
 
 ### Sample Configuration
 
-#### Minimal
+#### Minimal (legacy devices only)
 
-Most setups do not require any other configuration to get up and running.
+If you only have older Kasa devices that haven't been firmware-updated, no credentials are needed:
 
 ```json
 "platforms": [{
   "platform": "TplinkSmarthome",
   "name": "TplinkSmarthome"
+}]
+```
+
+#### With Kasa credentials (recommended)
+
+Newer devices (e.g. KP125M) and firmware-updated devices (e.g. HS103 with recent firmware) use the KLAP v2 protocol and require your Kasa account credentials to be discovered. Without credentials, only legacy devices on port 9999 will be found.
+
+```json
+"platforms": [{
+  "platform": "TplinkSmarthome",
+  "name": "TplinkSmarthome",
+  "kasaUsername": "you@example.com",
+  "kasaPassword": "your-kasa-password"
 }]
 ```
 
@@ -78,6 +91,9 @@ See [config.ts](src/config.ts) for documentation on these options. It is recomme
 "platforms": [{
   "platform": "TplinkSmarthome",
   "name": "TplinkSmarthome",
+
+  "kasaUsername": "",
+  "kasaPassword": "",
 
   "addCustomCharacteristics": true,
   "inUseThreshold": 0,
@@ -109,7 +125,12 @@ Devices that support energy monitoring (HS110, etc) will have extra characterist
 
 ### Discovery and Broadcast
 
-This plugin uses UDP broadcast to find devices on your network. This is also how the Kasa app finds devices. Try setting the `broadcast` configuration if you're having discovery issues. Some users have reported that rebooting their router or changing some router settings have fixed discovery issues.
+This plugin discovers devices using two methods:
+
+- **Legacy UDP broadcast** (port 9999) for older devices. This is also how the Kasa app finds older devices.
+- **KLAP v2 subnet scan** (port 80) for newer/updated devices. Requires `kasaUsername` and `kasaPassword` to be configured. The plugin scans your subnet for devices speaking the KLAP v2 protocol, which newer firmware and models like the KP125M use.
+
+Try setting the `broadcast` configuration to your subnet broadcast address (e.g. `192.168.1.255`) if you're having discovery issues. This is used by both discovery methods. Some users have reported that rebooting their router or changing some router settings have fixed discovery issues.
 
 ### Manually Specifying Devices
 
