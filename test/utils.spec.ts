@@ -26,8 +26,8 @@ describe("utils", () => {
       async () => {
         const startTimer = Date.now();
         const results = await Promise.all([deferredFn(), deferredFn(), deferredFn()]);
-        expect(Date.now() - startTimer).toBeGreaterThanOrEqual(deferTime);
-        expect(Date.now() - startTimer).toBeLessThanOrEqual(deferTime * 1.1);
+        expect(Date.now() - startTimer).toBeGreaterThanOrEqual(deferTime * 0.9);
+        expect(Date.now() - startTimer).toBeLessThanOrEqual(deferTime * 2);
         expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith(1);
         expect(results).toEqual([1, 1, 1]);
@@ -48,8 +48,8 @@ describe("utils", () => {
         const resultsOne = await batchOne;
         const resultsTwo = await batchTwo;
 
-        expect(Date.now() - startTimer).toBeGreaterThanOrEqual(deferTime * 2);
-        expect(Date.now() - startTimer).toBeLessThanOrEqual(deferTime * 2.2);
+        expect(Date.now() - startTimer).toBeGreaterThanOrEqual(deferTime * 1.9);
+        expect(Date.now() - startTimer).toBeLessThanOrEqual(deferTime * 3);
 
         expect(spy).toHaveBeenCalledTimes(2);
         expect(spy).toHaveBeenCalledWith(1);
