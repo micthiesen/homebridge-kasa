@@ -1,12 +1,10 @@
-/// <reference path="../../types/node-persist.d.ts" />
-
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   PlatformAccessory,
   type SerializedPlatformAccessory,
 } from "homebridge/lib/platformAccessory";
-import nodePersist from "node-persist";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +16,9 @@ type PlatformAccessoryFixture = PlatformAccessory & {
   fixtureName: string;
 };
 
-const accessoryStorage = nodePersist.create();
+function readFixture(filename: string): SerializedPlatformAccessoryFixture[] {
+  return JSON.parse(fs.readFileSync(path.join(__dirname, filename), "utf-8"));
+}
 
 const deserialize = function deserialize(
   serializedAccessory: SerializedPlatformAccessoryFixture,
@@ -39,19 +39,12 @@ const deserialize = function deserialize(
   return platformAccessory as PlatformAccessoryFixture;
 };
 
-accessoryStorage.initSync({ dir: __dirname });
+export const platformAccessories: PlatformAccessoryFixture[] = readFixture(
+  "cachedAccessories.json",
+).map((serializedAccessory) => deserialize(serializedAccessory));
 
-export const platformAccessories: PlatformAccessoryFixture[] = accessoryStorage
-  .getItem("cachedAccessories.json")
-  .map((serializedAccessory: SerializedPlatformAccessoryFixture) =>
-    deserialize(serializedAccessory),
-  );
-
-export const platformAccessoriesIssues = accessoryStorage
-  .getItem("cachedAccessoriesIssues.json")
-  .map((serializedAccessory: SerializedPlatformAccessoryFixture) =>
-    deserialize(serializedAccessory),
-  )
+export const platformAccessoriesIssues = readFixture("cachedAccessoriesIssues.json")
+  .map((serializedAccessory) => deserialize(serializedAccessory))
   .reduce(
     (
       map: Map<string, PlatformAccessoryFixture>,

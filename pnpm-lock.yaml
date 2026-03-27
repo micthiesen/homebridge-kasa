@@ -51,9 +51,6 @@ importers:
       homebridge:
         specifier: ~1.11.3
         version: 1.11.3
-      node-persist:
-        specifier: 0.0.12
-        version: 0.0.12
       ts-essentials:
         specifier: ^10.1.1
         version: 10.1.1(typescript@6.0.2)
