@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.0.2](https://github.com/micthiesen/homebridge-kasa/compare/v9.0.1...v9.0.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* fix: update PLUGIN_NAME to match package name homebridge-kasa ([018fc2e](https://github.com/micthiesen/homebridge-kasa/commit/018fc2e))
+
+## [9.0.1](https://github.com/micthiesen/homebridge-kasa/compare/v9.0.0...v9.0.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* remove lint step from CI ([b2dc8d8](https://github.com/micthiesen/homebridge-kasa/commit/b2dc8d8))
+
+### Documentation
+
+* add Kasa credentials config to README ([c8b01c2](https://github.com/micthiesen/homebridge-kasa/commit/c8b01c2))
+
+## [9.0.0](https://github.com/micthiesen/homebridge-kasa/compare/v8.0.5...v9.0.0) (2026-03-26)
+
+
+### Features
+
+* add KLAP v2 transport support for newer Kasa devices ([404aaa5](https://github.com/micthiesen/homebridge-kasa/commit/404aaa5))
+
+### Chores
+
+* switch to pnpm, add .node-version, match mitools CI setup ([85db4e3](https://github.com/micthiesen/homebridge-kasa/commit/85db4e3))
+* remove prepare script (conflicts with pnpm install) ([731bc0c](https://github.com/micthiesen/homebridge-kasa/commit/731bc0c))
+* replace rimraf with rm -rf for pnpm compatibility ([58b544f](https://github.com/micthiesen/homebridge-kasa/commit/58b544f))
+
+## [8.0.5](https://github.com/micthiesen/homebridge-kasa/compare/v8.0.4...v8.0.5) (2026-03-26)
+
+
+### Chores
+
+* rebrand to homebridge-kasa ([b58a86b](https://github.com/micthiesen/homebridge-kasa/commit/b58a86b))
+* add npm publish workflow ([c6bd767](https://github.com/micthiesen/homebridge-kasa/commit/c6bd767))
+
 ## [8.0.4](https://github.com/plasticrake/homebridge-tplink-smarthome/compare/v8.0.3...v8.0.4) (2026-03-08)
 
 
