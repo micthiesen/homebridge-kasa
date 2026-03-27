@@ -34,7 +34,7 @@
   "scripts": {
     "prebuild": "pnpm run clean",
     "build": "tsc --project tsconfig.source.json",
-    "clean": "rimraf lib/ build/",
+    "clean": "rm -rf lib/ build/",
     "clean:debug": "rimraf $PWD/test/homebridge/persist && pnpm run clean:debug:acc",
     "clean:debug:acc": "rimraf $PWD/test/homebridge/accessories",
     "clean:debugsim": "rimraf $PWD/test/homebridge-simulator/persist && pnpm run clean:debugsim:acc",
