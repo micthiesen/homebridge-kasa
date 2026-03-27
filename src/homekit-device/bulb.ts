@@ -1,7 +1,6 @@
 import type { PlatformAccessory, Service } from "homebridge";
-import { Categories } from "homebridge"; // enum
-import type { Bulb, LightState } from "tplink-smarthome-api";
-import type { BulbSysinfoLightState } from "tplink-smarthome-api/lib/bulb";
+import { Categories } from "homebridge";
+import type { Bulb, BulbSysinfoLightState, LightState } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
 import type TplinkSmarthomePlatform from "../platform.js";
 import type { TplinkSmarthomeAccessoryContext } from "../platform.js";

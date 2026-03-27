@@ -1,5 +1,5 @@
 import type { CharacteristicProps } from "homebridge";
-import { Formats, Perms } from "homebridge"; // enum
+import { Formats, Perms } from "homebridge";
 import type { MarkOptional } from "ts-essentials";
 import type DefaultCharacteristicClass from "./types.js";
 

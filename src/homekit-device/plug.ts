@@ -1,5 +1,5 @@
 import type { PlatformAccessory, Service } from "homebridge";
-import { Categories } from "homebridge"; // enum
+import { Categories } from "homebridge";
 import type { Plug, PlugSysinfo } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
 import type TplinkSmarthomePlatform from "../platform.js";

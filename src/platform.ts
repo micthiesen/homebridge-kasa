@@ -1,5 +1,3 @@
-import { createRequire } from "node:module";
-
 import chalk from "chalk";
 import type {
   API,
@@ -11,10 +9,11 @@ import type {
   Service,
   WithUUID,
 } from "homebridge";
-import { APIEvent, Categories } from "homebridge"; // enum
+import { APIEvent, Categories } from "homebridge";
 import { satisfies } from "semver";
 import type { Sysinfo } from "tplink-smarthome-api";
 import { Client } from "tplink-smarthome-api";
+import packageConfig from "../package.json" with { type: "json" };
 import Characteristics from "./characteristics/index.js";
 import type { TplinkSmarthomeConfig } from "./config.js";
 import { parseConfig } from "./config.js";
@@ -25,9 +24,6 @@ import { KlapDiscovery } from "./klap/index.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./settings.js";
 import type { TplinkDevice } from "./utils.js";
 import { isObjectLike, lookup, lookupCharacteristicNameByUUID } from "./utils.js";
-
-const require = createRequire(import.meta.url);
-const packageConfig = require("../package.json");
 
 export type TplinkSmarthomeAccessoryContext = {
   deviceId?: string;

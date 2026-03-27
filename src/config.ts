@@ -1,12 +1,13 @@
-import { createRequire } from "node:module";
 import type { ErrorObject as AjvErrorObject } from "ajv";
+import AjvModule from "ajv";
+import addFormatsModule from "ajv-formats";
 import defaults from "lodash.defaults";
 
+import configSchema from "../config.schema.json" with { type: "json" };
 import { isObjectLike } from "./utils.js";
 
-const require = createRequire(import.meta.url);
-const Ajv: typeof import("ajv").default = require("ajv");
-const addFormats: typeof import("ajv-formats").default = require("ajv-formats");
+const Ajv = AjvModule.default;
+const addFormats = addFormatsModule.default;
 
 export class ConfigParseError extends Error {
   /**
@@ -285,7 +286,7 @@ export function parseConfig(config: Record<string, unknown>): TplinkSmarthomeCon
   const ajv = new Ajv({ allErrors: true });
   addFormats(ajv);
   ajv.addVocabulary(["placeholder", "titleMap"]);
-  const validate = ajv.compile(require("../config.schema.json").schema);
+  const validate = ajv.compile(configSchema.schema);
   const valid = validate(config);
   if (!valid) throw new ConfigParseError("Error parsing config", validate.errors);
 

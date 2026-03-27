@@ -1,5 +1,5 @@
 import type { WithUUID } from "homebridge";
-import { Formats } from "homebridge"; // enum
+import { Formats } from "homebridge";
 import type DefaultCharacteristicClass from "./types.js";
 
 export default function kilowattVoltAmpereHours(

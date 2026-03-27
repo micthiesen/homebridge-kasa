@@ -25,7 +25,7 @@ describe("TplinkSmarthomePlatform", () => {
     platform = new TplinkSmarthomePlatform(
       log,
       { platform: "", name: "tplink" },
-      new HomebridgeAPI() as any,
+      new HomebridgeAPI(),
     );
 
     tplinkDevice = new EventEmitter();
@@ -37,17 +37,6 @@ describe("TplinkSmarthomePlatform", () => {
       alias: "TEST",
     });
   });
-
-  // describe('~createTplinkAccessory', function () {
-  //   const createTplinkAccessory = TplinkSmarthomePlatform.__get__(
-  //     'createTplinkAccessory'
-  //   );
-  //   // const platform = { config: { switchModels: ['HS200'] } };
-  //   it('should create TplinkAccessory', function () {
-  //     const accessory = createTplinkAccessory(platform, null, tplinkDevice);
-  //     expect(accessory).to.be.instanceof(TplinkAccessory);
-  //   });
-  // });
 
   describe("#addAccessory", () => {
     it.skip("should add platformAccessory to #homebridgeAccessories", () => {});

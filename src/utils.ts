@@ -8,7 +8,6 @@ import type {
 } from "homebridge";
 
 import type { Bulb, Plug } from "tplink-smarthome-api";
-import type { Buildable } from "ts-essentials";
 
 import type { KlapBulb, KlapPlug } from "./klap/index.js";
 
@@ -105,11 +104,10 @@ export function hasCharacteristic(
   characteristic: WithUUID<{ new (): Characteristic }>,
 ): boolean {
   return (
-    characteristics.find(
-      (char) =>
-        // @ts-expect-error: still want to check UUID
-        char instanceof characteristic || char.UUID === characteristic.UUID,
-    ) !== undefined
+    characteristics.find((char) => {
+      if (char instanceof characteristic) return true;
+      return (char as Characteristic).UUID === characteristic.UUID;
+    }) !== undefined
   );
 }
 
@@ -140,12 +138,12 @@ export function lookupCharacteristicNameByUUID(
   characteristic: typeof Characteristic,
   uuid: string,
 ): string | undefined {
-  const keys = Object.keys(characteristic);
+  const record = characteristic as unknown as Record<string, unknown>;
+  const keys = Object.keys(record);
   for (let i = 0; i < keys.length; i += 1) {
     const key = keys[i];
-    // @ts-expect-error: not sure how to make this correct in typescript
-    const c = characteristic[key];
-    if ("UUID" in c && c.UUID === uuid) {
+    const c = record[key];
+    if (isObjectLike(c) && "UUID" in c && c.UUID === uuid) {
       return key;
     }
   }
@@ -156,18 +154,16 @@ export function miredToKelvin(mired: number): number {
   return 1e6 / mired;
 }
 
-function cloneLogger(logger: Logging) {
-  // @ts-expect-error this doesn't work on function types
-  const clonedLogger: Buildable<Logging> = logger.info.bind(logger);
-  clonedLogger.info = logger.info;
-  clonedLogger.warn = logger.warn;
-  clonedLogger.error = logger.error;
-  clonedLogger.debug = logger.debug;
-  clonedLogger.log = logger.log;
+function cloneLogger(logger: Logging): Logging {
+  const baseFn = logger.info.bind(logger) as Logging;
+  baseFn.info = logger.info;
+  baseFn.warn = logger.warn;
+  baseFn.error = logger.error;
+  baseFn.debug = logger.debug;
+  baseFn.log = logger.log;
+  baseFn.prefix = logger.prefix;
 
-  clonedLogger.prefix = logger.prefix;
-
-  return clonedLogger as Logging;
+  return baseFn;
 }
 
 export function prefixLogger(logger: Logger, prefix: string | (() => string)): Logging {

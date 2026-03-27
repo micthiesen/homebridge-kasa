@@ -37,6 +37,5 @@
     "API.md",
     "test/homebridge*/accessories/",
     "test/homebridge*/persist/"
-  ],
-  "ignoreRegExpList": ["/[/*] eslint[- ].*/gi"]
+  ]
 }

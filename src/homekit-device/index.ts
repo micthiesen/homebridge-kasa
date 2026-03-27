@@ -10,7 +10,7 @@ import type {
   Service,
   WithUUID,
 } from "homebridge";
-import { PlatformAccessoryEvent } from "homebridge"; // enum
+import { PlatformAccessoryEvent } from "homebridge";
 
 import AccessoryInformation from "../accessory-information.js";
 import type { TplinkSmarthomeConfig } from "../config.js";
