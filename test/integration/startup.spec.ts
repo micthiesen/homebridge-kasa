@@ -1,6 +1,6 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "fs-extra";
 import { HAPStorage } from "hap-nodejs";
 import type { DynamicPlatformPlugin, PlatformPluginConstructor } from "homebridge";
 import type { PluginManager } from "homebridge/lib/pluginManager";
@@ -27,8 +27,9 @@ describe("homebridge", () => {
   function setupHomebridge(scenarioName: string) {
     const scenarioDir = path.resolve(__dirname, "fixtures", "homebridge", scenarioName);
 
-    fs.emptyDirSync(homebridgeStorageFolder);
-    fs.copySync(scenarioDir, homebridgeStorageFolder);
+    fs.rmSync(homebridgeStorageFolder, { recursive: true, force: true });
+    fs.mkdirSync(homebridgeStorageFolder, { recursive: true });
+    fs.cpSync(scenarioDir, homebridgeStorageFolder, { recursive: true });
 
     return new Server({
       customPluginPath: pluginPath,

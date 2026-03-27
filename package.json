@@ -60,16 +60,13 @@
     "tplink-smarthome-api": "~5.0.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.19.15",
     "@types/semver": "^7.7.1",
     "@biomejs/biome": "2.4.8",
     "@micthiesen/mitools": "^2",
     "cspell": "^9.7.0",
-    "fs-extra": "^11.3.4",
     "hap-nodejs": "~0.14.2",
     "homebridge": "~1.11.3",
-    "ts-essentials": "^10.1.1",
     "typescript": "~6.0.2",
     "vitest": "^4.1.1"
   },

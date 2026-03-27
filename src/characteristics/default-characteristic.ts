@@ -1,6 +1,5 @@
 import type { CharacteristicProps } from "homebridge";
 import { Formats, Perms } from "homebridge";
-import type { MarkOptional } from "ts-essentials";
 import type DefaultCharacteristicClass from "./types.js";
 
 export default function defaultCharacteristic(
@@ -10,7 +9,8 @@ export default function defaultCharacteristic(
     constructor(
       displayName: string,
       UUID: string,
-      props?: MarkOptional<CharacteristicProps, "format" | "perms">,
+      props?: Omit<CharacteristicProps, "format" | "perms"> &
+        Partial<Pick<CharacteristicProps, "format" | "perms">>,
     ) {
       const combinedProps = {
         format: Formats.FLOAT,
