@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import { HomebridgeAPI } from "homebridge/lib/api";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import TplinkSmarthomePlatform from "../src/platform.js";
+import { TplinkSmarthomePlatform } from "../src/TplinkSmarthomePlatform.js";
 
 import {
   platformAccessories,

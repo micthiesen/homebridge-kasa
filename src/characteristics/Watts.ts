@@ -1,15 +1,15 @@
 import type { WithUUID } from "homebridge";
 import type DefaultCharacteristicClass from "./types.js";
 
-export default function voltAmperes(
+export function createWatts(
   DefaultCharacteristic: typeof DefaultCharacteristicClass,
 ): WithUUID<new () => DefaultCharacteristicClass> {
-  return class VoltAmperes extends DefaultCharacteristic {
-    static readonly UUID = "E863F110-079E-48FF-8F27-9C2605A29F52";
+  return class Watts extends DefaultCharacteristic {
+    static readonly UUID = "E863F10D-079E-48FF-8F27-9C2605A29F52";
 
     constructor() {
-      super("Apparent Power", VoltAmperes.UUID, {
-        unit: "VA",
+      super("Consumption", Watts.UUID, {
+        unit: "W",
         minStep: 0.1,
       });
     }

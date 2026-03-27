@@ -14,27 +14,29 @@ import { satisfies } from "semver";
 import type { Sysinfo } from "tplink-smarthome-api";
 import { Client } from "tplink-smarthome-api";
 import packageConfig from "../package.json" with { type: "json" };
-import Characteristics from "./characteristics/index.js";
+import { createCharacteristics } from "./characteristics/createCharacteristics.js";
 import type { TplinkSmarthomeConfig } from "./config.js";
 import { parseConfig } from "./config.js";
-import create from "./homekit-device/create.js";
-import type HomekitDevice from "./homekit-device/index.js";
-import type { KlapBulb, KlapPlug } from "./klap/index.js";
-import { KlapDiscovery } from "./klap/index.js";
+import { createHomekitDevice } from "./devices/createHomekitDevice.js";
+import type { HomekitDevice } from "./devices/HomekitDevice.js";
+import type { KlapBulb } from "./klap/KlapBulb.js";
+import { KlapDiscovery } from "./klap/KlapDiscovery.js";
+import type { KlapPlug } from "./klap/KlapPlug.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./settings.js";
-import type { TplinkDevice } from "./utils.js";
-import { isObjectLike, lookup, lookupCharacteristicNameByUUID } from "./utils.js";
+import { lookup, lookupCharacteristicNameByUUID } from "./util/homekit.js";
+import type { TplinkDevice } from "./util/types.js";
+import { isObjectLike } from "./util/types.js";
 
 export type TplinkSmarthomeAccessoryContext = {
   deviceId?: string;
 };
 
-export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
+export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
   public readonly Service;
 
   public readonly Characteristic;
 
-  public customCharacteristics: ReturnType<typeof Characteristics>;
+  public customCharacteristics: ReturnType<typeof createCharacteristics>;
 
   public config: TplinkSmarthomeConfig;
 
@@ -82,7 +84,7 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
     this.config = parseConfig(config);
     this.log.debug("config: %j", this.config);
 
-    this.customCharacteristics = Characteristics(api.hap.Characteristic);
+    this.customCharacteristics = createCharacteristics(api.hap.Characteristic);
 
     this.categories.set(Categories.LIGHTBULB, "LIGHTBULB");
     this.categories.set(Categories.OUTLET, "OUTLET");
@@ -315,7 +317,7 @@ export default class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
     accessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
     tplinkDevice: TplinkDevice,
   ): HomekitDevice {
-    return create(this, this.config, accessory, tplinkDevice);
+    return createHomekitDevice(this, this.config, accessory, tplinkDevice);
   }
 
   getCategoryName(category: Categories): string | undefined {

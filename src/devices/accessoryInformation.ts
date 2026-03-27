@@ -1,7 +1,7 @@
 import type { HAP, PlatformAccessory, Service } from "homebridge";
-import type HomekitDevice from "./homekit-device/index.js";
+import type { HomekitDevice } from "./HomekitDevice.js";
 
-export default function accessoryInformation(
+export function accessoryInformation(
   hap: HAP,
 ): (accessory: PlatformAccessory, hkDevice: HomekitDevice) => Service | undefined {
   const { Characteristic } = hap;

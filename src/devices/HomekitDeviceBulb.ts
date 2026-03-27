@@ -2,18 +2,20 @@ import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge";
 import type { Bulb, BulbSysinfoLightState, LightState } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
-import type TplinkSmarthomePlatform from "../platform.js";
-import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
+import type {
+  TplinkSmarthomeAccessoryContext,
+  TplinkSmarthomePlatform,
+} from "../TplinkSmarthomePlatform.js";
+import { deferAndCombine } from "../util/deferAndCombine.js";
 import {
-  deferAndCombine,
-  delay,
   getOrAddCharacteristic,
   kelvinToMired,
   miredToKelvin,
-} from "../utils.js";
-import HomekitDevice from "./index.js";
+} from "../util/homekit.js";
+import { delay } from "../util/types.js";
+import { HomekitDevice } from "./HomekitDevice.js";
 
-export default class HomeKitDeviceBulb extends HomekitDevice {
+export class HomekitDeviceBulb extends HomekitDevice {
   private desiredLightState: LightState = {};
 
   constructor(

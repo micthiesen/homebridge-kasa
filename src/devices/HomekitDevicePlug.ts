@@ -2,12 +2,15 @@ import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge";
 import type { Plug, PlugSysinfo } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
-import type TplinkSmarthomePlatform from "../platform.js";
-import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
-import { deferAndCombine, getOrAddCharacteristic } from "../utils.js";
-import HomekitDevice from "./index.js";
+import type {
+  TplinkSmarthomeAccessoryContext,
+  TplinkSmarthomePlatform,
+} from "../TplinkSmarthomePlatform.js";
+import { deferAndCombine } from "../util/deferAndCombine.js";
+import { getOrAddCharacteristic } from "../util/homekit.js";
+import { HomekitDevice } from "./HomekitDevice.js";
 
-export default class HomeKitDevicePlug extends HomekitDevice {
+export class HomekitDevicePlug extends HomekitDevice {
   private desiredPowerState?: boolean;
 
   constructor(

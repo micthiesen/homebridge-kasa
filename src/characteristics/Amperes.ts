@@ -1,7 +1,7 @@
 import type { WithUUID } from "homebridge";
 import type DefaultCharacteristicClass from "./types.js";
 
-export default function amperes(
+export function createAmperes(
   DefaultCharacteristic: typeof DefaultCharacteristicClass,
 ): WithUUID<new () => DefaultCharacteristicClass> {
   return class Amperes extends DefaultCharacteristic {

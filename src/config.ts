@@ -2,7 +2,7 @@ import type { ErrorObject as AjvErrorObject } from "ajv";
 import AjvModule from "ajv";
 import addFormatsModule from "ajv-formats";
 import configSchema from "../config.schema.json" with { type: "json" };
-import { isObjectLike } from "./utils.js";
+import { isObjectLike } from "./util/types.js";
 
 const Ajv = AjvModule.default;
 const addFormats = addFormatsModule.default;

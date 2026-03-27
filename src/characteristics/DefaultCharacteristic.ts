@@ -2,7 +2,7 @@ import type { CharacteristicProps } from "homebridge";
 import { Formats, Perms } from "homebridge";
 import type DefaultCharacteristicClass from "./types.js";
 
-export default function defaultCharacteristic(
+export function createDefaultCharacteristic(
   Characteristic: typeof DefaultCharacteristicClass,
 ): typeof DefaultCharacteristicClass {
   return class DefaultCharacteristic extends Characteristic {

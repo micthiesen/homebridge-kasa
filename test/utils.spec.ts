@@ -1,7 +1,9 @@
 import { Service } from "hap-nodejs";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
-import { deferAndCombine, delay, isObjectLike, lookup } from "../src/utils.js";
+import { deferAndCombine } from "../src/util/deferAndCombine.js";
+import { lookup } from "../src/util/homekit.js";
+import { delay, isObjectLike } from "../src/util/types.js";
 
 describe("utils", () => {
   describe("deferAndCombine", () => {

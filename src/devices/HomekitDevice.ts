@@ -11,15 +11,16 @@ import type {
   WithUUID,
 } from "homebridge";
 import { PlatformAccessoryEvent } from "homebridge";
-
-import AccessoryInformation from "../accessory-information.js";
 import type { TplinkSmarthomeConfig } from "../config.js";
-import type TplinkSmarthomePlatform from "../platform.js";
-import type { TplinkSmarthomeAccessoryContext } from "../platform.js";
-import type { TplinkDevice } from "../utils.js";
-import { prefixLogger } from "../utils.js";
+import type {
+  TplinkSmarthomeAccessoryContext,
+  TplinkSmarthomePlatform,
+} from "../TplinkSmarthomePlatform.js";
+import { prefixLogger } from "../util/logger.js";
+import type { TplinkDevice } from "../util/types.js";
+import { accessoryInformation } from "./accessoryInformation.js";
 
-export default abstract class HomekitDevice {
+export abstract class HomekitDevice {
   readonly log: Logger;
 
   homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext>;
@@ -79,7 +80,7 @@ export default abstract class HomekitDevice {
       this.platform.api.updatePlatformAccessories([this.homebridgeAccessory]);
     }
 
-    const accInfo = AccessoryInformation(platform.api.hap)(
+    const accInfo = accessoryInformation(platform.api.hap)(
       this.homebridgeAccessory,
       this,
     );
