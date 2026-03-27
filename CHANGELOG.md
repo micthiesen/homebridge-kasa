@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.1.0](https://github.com/micthiesen/homebridge-kasa/compare/v9.0.2...v9.1.0) (2026-03-27)
+
+
+### Chores
+
+* **build:** migrate to ESM with mitools base tsconfig ([01a1f51](https://github.com/micthiesen/homebridge-kasa/commit/01a1f51))
+* **build:** upgrade TypeScript from 5.3 to 6.0 ([faec1a1](https://github.com/micthiesen/homebridge-kasa/commit/faec1a1))
+* **build:** migrate from jest to vitest ([cf395e8](https://github.com/micthiesen/homebridge-kasa/commit/cf395e8))
+* **build:** replace eslint/prettier with biome via mitools shared config ([d83032e](https://github.com/micthiesen/homebridge-kasa/commit/d83032e))
+* **deps:** audit and upgrade dependencies ([d1620e8](https://github.com/micthiesen/homebridge-kasa/commit/d1620e8))
+* **deps:** drop fs-extra and ts-essentials dependencies ([5c4b051](https://github.com/micthiesen/homebridge-kasa/commit/5c4b051))
+* **src:** reorganize src/ directory structure ([1041adb](https://github.com/micthiesen/homebridge-kasa/commit/1041adb))
+* code quality cleanup ([44a03cc](https://github.com/micthiesen/homebridge-kasa/commit/44a03cc))
+* clean up tsconfig and remove dead files ([2ef8121](https://github.com/micthiesen/homebridge-kasa/commit/2ef8121))
+
+### CI
+
+* add test step to CI pipeline ([094ebef](https://github.com/micthiesen/homebridge-kasa/commit/094ebef))
+
+### Tests
+
+* replace node-persist with fs.readFileSync in test fixtures ([df7311b](https://github.com/micthiesen/homebridge-kasa/commit/df7311b))
+* loosen timing bounds in deferAndCombine tests ([a275661](https://github.com/micthiesen/homebridge-kasa/commit/a275661))
+
 ## [9.0.2](https://github.com/micthiesen/homebridge-kasa/compare/v9.0.1...v9.0.2) (2026-03-26)
 
 
