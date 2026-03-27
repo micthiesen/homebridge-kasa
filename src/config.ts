@@ -1,8 +1,6 @@
 import type { ErrorObject as AjvErrorObject } from "ajv";
 import AjvModule from "ajv";
 import addFormatsModule from "ajv-formats";
-import defaults from "lodash.defaults";
-
 import configSchema from "../config.schema.json" with { type: "json" };
 import { isObjectLike } from "./utils.js";
 
@@ -293,7 +291,10 @@ export function parseConfig(config: Record<string, unknown>): TplinkSmarthomeCon
   if (!isTplinkSmarthomeConfigInput(config))
     throw new ConfigParseError("Error parsing config");
 
-  const c = defaults(config, defaultConfig);
+  const c: TplinkSmarthomeConfigDefault & TplinkSmarthomeConfigInput = {
+    ...defaultConfig,
+    ...config,
+  };
 
   const defaultSendOptions = {
     timeout: c.timeout * 1000,

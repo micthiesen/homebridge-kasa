@@ -12,17 +12,11 @@ importers:
         specifier: ^8.18.0
         version: 8.18.0
       ajv-formats:
-        specifier: ^2.1.1
-        version: 2.1.1(ajv@8.18.0)
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.18.0)
       chalk:
         specifier: ^5.4.1
         version: 5.6.2
-      lodash.castarray:
-        specifier: ^4.4.0
-        version: 4.4.0
-      lodash.defaults:
-        specifier: ^4.2.0
-        version: 4.2.0
       semver:
         specifier: ^7.7.4
         version: 7.7.4
@@ -39,15 +33,9 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
-      '@types/lodash.castarray':
-        specifier: ^4.4.9
-        version: 4.4.9
-      '@types/lodash.defaults':
-        specifier: ^4.2.9
-        version: 4.2.9
       '@types/node':
-        specifier: ^20.19.37
-        version: 20.19.37
+        specifier: ^22.19.15
+        version: 22.19.15
       '@types/semver':
         specifier: ^7.7.1
         version: 7.7.1
@@ -58,10 +46,10 @@ importers:
         specifier: ^11.3.4
         version: 11.3.4
       hap-nodejs:
-        specifier: ~0.14.1
+        specifier: ~0.14.2
         version: 0.14.2
       homebridge:
-        specifier: ~1.11.2
+        specifier: ~1.11.3
         version: 1.11.3
       node-persist:
         specifier: 0.0.12
@@ -74,7 +62,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.1
-        version: 4.1.2(@types/node@20.19.37)(vite@8.0.3(@types/node@20.19.37)(yaml@2.8.3))
+        version: 4.1.2(@types/node@22.19.15)(vite@8.0.3(@types/node@22.19.15)(yaml@2.8.3))
 
 packages:
 
@@ -539,17 +527,8 @@ packages:
   '@types/jsonfile@6.1.4':
     resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
-  '@types/lodash.castarray@4.4.9':
-    resolution: {integrity: sha512-gesQ7ozv8DXMO+XmAFQpUTQMnAGE8P3CiGOMGc84TYFvayPSmncXbeZK4s5zg/Uw8PlAgv2AMH70G7MvrucK5w==}
-
-  '@types/lodash.defaults@4.2.9':
-    resolution: {integrity: sha512-Dt8tM449i+ixBi5kbyawm064go5d4j766ENMOt6B/vOCdwInu3lL0PfLTZanK0Hnaqv0Nhe1u5fEMvRhii/n2w==}
-
-  '@types/lodash@4.17.24':
-    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
-
-  '@types/node@20.19.37':
-    resolution: {integrity: sha512-8kzdPJ3FsNsVIurqBs7oodNnCEVbni9yUEkaHbgptDACOPW04jimGagZ51E6+lXUwJjgnBw+hyko/lkFWCldqw==}
+  '@types/node@22.19.15':
+    resolution: {integrity: sha512-F0R/h2+dsy5wJAUe3tAU6oqa2qbWY5TpNfL/RGmo1y38hiyO1w3x2jPtt76wmuaJI4DQnOBu21cNXQ2STIUUWg==}
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
@@ -583,8 +562,8 @@ packages:
   '@vitest/utils@4.1.2':
     resolution: {integrity: sha512-xw2/TiX82lQHA06cgbqRKFb5lCAy3axQ4H4SoUFhUsg+wztiet+co86IAMDtF6Vm1hc7J6j09oh/rgDn+JdKIQ==}
 
-  ajv-formats@2.1.1:
-    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+  ajv-formats@3.0.1:
+    resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
     peerDependencies:
       ajv: ^8.0.0
     peerDependenciesMeta:
@@ -1024,9 +1003,6 @@ packages:
   lodash.clone@4.5.0:
     resolution: {integrity: sha512-GhrVeweiTD6uTmmn5hV/lzgCQhccwReIVRLHp7LT4SopOjqEZ5BbX8b5WWEtAKasjmy8hR7ZPwsYlxRCku5odg==}
     deprecated: This package is deprecated. Use structuredClone instead.
-
-  lodash.defaults@4.2.0:
-    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
 
   lodash.defaultto@4.14.0:
     resolution: {integrity: sha512-G6tizqH6rg4P5j32Wy4Z3ZIip7OfG8YWWlPFzUFGcYStH1Ld0l1tWs6NevEQNEDnO1M3NZYjuHuraaFSN5WqeQ==}
@@ -1855,25 +1831,15 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 20.19.37
+      '@types/node': 22.19.15
 
   '@types/http-cache-semantics@4.2.0': {}
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 20.19.37
+      '@types/node': 22.19.15
 
-  '@types/lodash.castarray@4.4.9':
-    dependencies:
-      '@types/lodash': 4.17.24
-
-  '@types/lodash.defaults@4.2.9':
-    dependencies:
-      '@types/lodash': 4.17.24
-
-  '@types/lodash@4.17.24': {}
-
-  '@types/node@20.19.37':
+  '@types/node@22.19.15':
     dependencies:
       undici-types: 6.21.0
 
@@ -1888,13 +1854,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.2(vite@8.0.3(@types/node@20.19.37)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.2(vite@8.0.3(@types/node@22.19.15)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.3(@types/node@20.19.37)(yaml@2.8.3)
+      vite: 8.0.3(@types/node@22.19.15)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.2':
     dependencies:
@@ -1920,7 +1886,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  ajv-formats@2.1.1(ajv@8.18.0):
+  ajv-formats@3.0.1(ajv@8.18.0):
     optionalDependencies:
       ajv: 8.18.0
 
@@ -2362,8 +2328,6 @@ snapshots:
 
   lodash.clone@4.5.0: {}
 
-  lodash.defaults@4.2.0: {}
-
   lodash.defaultto@4.14.0: {}
 
   lodash.get@4.4.2: {}
@@ -2655,7 +2619,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite@8.0.3(@types/node@20.19.37)(yaml@2.8.3):
+  vite@8.0.3(@types/node@22.19.15)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -2663,14 +2627,14 @@ snapshots:
       rolldown: 1.0.0-rc.12
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 20.19.37
+      '@types/node': 22.19.15
       fsevents: 2.3.3
       yaml: 2.8.3
 
-  vitest@4.1.2(@types/node@20.19.37)(vite@8.0.3(@types/node@20.19.37)(yaml@2.8.3)):
+  vitest@4.1.2(@types/node@22.19.15)(vite@8.0.3(@types/node@22.19.15)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.2
-      '@vitest/mocker': 4.1.2(vite@8.0.3(@types/node@20.19.37)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.2(vite@8.0.3(@types/node@22.19.15)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.2
       '@vitest/runner': 4.1.2
       '@vitest/snapshot': 4.1.2
@@ -2687,10 +2651,10 @@ snapshots:
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vite: 8.0.3(@types/node@20.19.37)(yaml@2.8.3)
+      vite: 8.0.3(@types/node@22.19.15)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 20.19.37
+      '@types/node': 22.19.15
     transitivePeerDependencies:
       - msw
 
