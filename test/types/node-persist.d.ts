@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-declare module 'node-persist' {
+declare module "node-persist" {
   export interface InitOptions {
     dir?: string; // default 'persist'
     stringify?: typeof JSON.stringify; // default JSON.stringify

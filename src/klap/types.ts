@@ -11,7 +11,7 @@ export interface KasaCredentials {
 
 // -- Transport --
 
-export type TransportType = 'klap' | 'aes';
+export type TransportType = "klap" | "aes";
 
 // -- Session state --
 

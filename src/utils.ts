@@ -5,21 +5,19 @@ import type {
   LogLevel,
   Service,
   WithUUID,
-} from 'homebridge';
+} from "homebridge";
 
-import type { Bulb, Plug } from 'tplink-smarthome-api';
-import type { Buildable } from 'ts-essentials';
+import type { Bulb, Plug } from "tplink-smarthome-api";
+import type { Buildable } from "ts-essentials";
 
-import type { KlapPlug, KlapBulb } from './klap';
+import type { KlapBulb, KlapPlug } from "./klap";
 
 export type TplinkDevice = Bulb | Plug | KlapPlug | KlapBulb;
 
-export function isObjectLike(
-  candidate: unknown
-): candidate is Record<string, unknown> {
+export function isObjectLike(candidate: unknown): candidate is Record<string, unknown> {
   return (
-    (typeof candidate === 'object' && candidate !== null) ||
-    typeof candidate === 'function'
+    (typeof candidate === "object" && candidate !== null) ||
+    typeof candidate === "function"
   );
 }
 
@@ -39,7 +37,7 @@ export function isObjectLike(
 export function deferAndCombine<T, U>(
   fn: (requestCount: number) => Promise<T>,
   timeout: number,
-  runNowFn?: (arg: U) => void
+  runNowFn?: (arg: U) => void,
 ): (arg?: U) => Promise<T> {
   const requests: {
     resolve: (value: T | PromiseLike<T>) => void;
@@ -84,12 +82,12 @@ export function delay(ms: number): Promise<void> {
 
 export function getOrAddCharacteristic(
   service: Service,
-  characteristic: WithUUID<new () => Characteristic>
+  characteristic: WithUUID<new () => Characteristic>,
 ): Characteristic {
   if (
     !hasCharacteristic(
       service.characteristics.concat(service.optionalCharacteristics),
-      characteristic
+      characteristic,
     )
   ) {
     // This it to suppress warning: Characteristic not in required or optional characteristic section for service
@@ -104,13 +102,13 @@ export function getOrAddCharacteristic(
 
 export function hasCharacteristic(
   characteristics: Array<Characteristic>,
-  characteristic: WithUUID<{ new (): Characteristic }>
+  characteristic: WithUUID<{ new (): Characteristic }>,
 ): boolean {
   return (
     characteristics.find(
       (char) =>
         // @ts-expect-error: still want to check UUID
-        char instanceof characteristic || char.UUID === characteristic.UUID
+        char instanceof characteristic || char.UUID === characteristic.UUID,
     ) !== undefined
   );
 }
@@ -122,11 +120,10 @@ export function kelvinToMired(kelvin: number): number {
 export function lookup<T>(
   object: unknown,
   compareFn: undefined | ((objectProp: unknown, search: T) => boolean),
-  value: T
+  value: T,
 ): string | undefined {
   const compare =
-    compareFn ??
-    ((objectProp: unknown, search: T): boolean => objectProp === search);
+    compareFn ?? ((objectProp: unknown, search: T): boolean => objectProp === search);
 
   if (isObjectLike(object)) {
     const keys = Object.keys(object);
@@ -141,14 +138,14 @@ export function lookup<T>(
 
 export function lookupCharacteristicNameByUUID(
   characteristic: typeof Characteristic,
-  uuid: string
+  uuid: string,
 ): string | undefined {
   const keys = Object.keys(characteristic);
   for (let i = 0; i < keys.length; i += 1) {
     const key = keys[i];
     // @ts-expect-error: not sure how to make this correct in typescript
     const c = characteristic[key];
-    if ('UUID' in c && c.UUID === uuid) {
+    if ("UUID" in c && c.UUID === uuid) {
       return key;
     }
   }
@@ -173,10 +170,7 @@ function cloneLogger(logger: Logging) {
   return clonedLogger as Logging;
 }
 
-export function prefixLogger(
-  logger: Logger,
-  prefix: string | (() => string)
-): Logging {
+export function prefixLogger(logger: Logger, prefix: string | (() => string)): Logging {
   const newLogger = cloneLogger(logger as Logging);
 
   const origLog = logger.log.bind(newLogger);

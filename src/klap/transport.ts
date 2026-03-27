@@ -4,23 +4,22 @@
  * Reference: python-kasa klapprotocol.py, klaptransport.py, aestransport.py
  */
 
-import * as http from 'node:http';
-
-import type { KasaCredentials, KlapSessionState, AesSessionState } from './types';
+import * as http from "node:http";
 import {
-  generateKlapLocalSeed,
+  aesDecrypt,
+  aesEncrypt,
+  decryptAesSessionKey,
+  deriveKlapKeys,
+  generateAesKeyPair,
+  generateAesLoginHash,
   generateKlapAuthHash,
   generateKlapLocalAuthHash,
+  generateKlapLocalSeed,
   generateKlapRemoteAuthHash,
-  deriveKlapKeys,
-  klapEncrypt,
   klapDecrypt,
-  generateAesKeyPair,
-  decryptAesSessionKey,
-  aesEncrypt,
-  aesDecrypt,
-  generateAesLoginHash,
-} from './crypto';
+  klapEncrypt,
+} from "./crypto";
+import type { AesSessionState, KasaCredentials, KlapSessionState } from "./types";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,7 +28,7 @@ import {
 const DEFAULT_TIMEOUT = 10_000;
 const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hour (conservative)
 
-const DEFAULT_CREDENTIALS: KasaCredentials = { username: '', password: '' };
+const DEFAULT_CREDENTIALS: KasaCredentials = { username: "", password: "" };
 
 // ---------------------------------------------------------------------------
 // HTTP helper
@@ -49,36 +48,36 @@ function httpPost(
 ): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
-    const reqBody = typeof body === 'string' ? Buffer.from(body, 'utf-8') : body;
+    const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
 
     const req = http.request(
       {
         hostname: parsed.hostname,
         port: parsed.port || 80,
         path: parsed.pathname + parsed.search,
-        method: 'POST',
+        method: "POST",
         headers: {
           ...headers,
-          'Content-Length': String(reqBody.length),
+          "Content-Length": String(reqBody.length),
         },
         timeout: timeoutMs,
       },
       (res) => {
         const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => {
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => {
           resolve({
             statusCode: res.statusCode ?? 0,
             headers: res.headers,
             body: Buffer.concat(chunks),
           });
         });
-        res.on('error', reject);
+        res.on("error", reject);
       },
     );
 
-    req.on('error', reject);
-    req.on('timeout', () => {
+    req.on("error", reject);
+    req.on("timeout", () => {
       req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms`));
     });
 
@@ -95,7 +94,7 @@ function httpPost(
  * for sending back in a Cookie header.
  */
 function parseSessionCookie(headers: http.IncomingHttpHeaders): string | undefined {
-  const raw = headers['set-cookie'];
+  const raw = headers["set-cookie"];
   if (!raw) return undefined;
 
   const cookies = Array.isArray(raw) ? raw : [raw];
@@ -112,7 +111,7 @@ function parseSessionCookie(headers: http.IncomingHttpHeaders): string | undefin
  * Parse the TIMEOUT value from Set-Cookie headers (seconds).
  */
 function parseTimeoutCookie(headers: http.IncomingHttpHeaders): number | undefined {
-  const raw = headers['set-cookie'];
+  const raw = headers["set-cookie"];
   if (!raw) return undefined;
 
   const cookies = Array.isArray(raw) ? raw : [raw];
@@ -184,7 +183,7 @@ export class KlapTransport {
     const hs1Resp = await httpPost(
       `${this.baseUrl}/app/handshake1`,
       localSeed,
-      { 'Content-Type': 'application/octet-stream' },
+      { "Content-Type": "application/octet-stream" },
       this.timeout,
     );
 
@@ -209,7 +208,7 @@ export class KlapTransport {
     if (!serverHash.equals(expectedHash)) {
       throw new Error(
         `KLAP handshake1: server hash mismatch on ${this.host}. ` +
-        'Check that credentials are correct.',
+          "Check that credentials are correct.",
       );
     }
 
@@ -229,7 +228,7 @@ export class KlapTransport {
       `${this.baseUrl}/app/handshake2`,
       remoteAuthHash,
       {
-        'Content-Type': 'application/octet-stream',
+        "Content-Type": "application/octet-stream",
         Cookie: cookie,
       },
       this.timeout,
@@ -250,9 +249,7 @@ export class KlapTransport {
     // Compute session expiry. Use the device's timeout (seconds) if available,
     // otherwise fall back to our conservative TTL, with a 20-minute buffer.
     const bufferMs = 20 * 60 * 1000;
-    const expiresIn = timeoutSec
-      ? timeoutSec * 1000 - bufferMs
-      : SESSION_TTL_MS;
+    const expiresIn = timeoutSec ? timeoutSec * 1000 - bufferMs : SESSION_TTL_MS;
 
     this.session = {
       cookie,
@@ -276,7 +273,7 @@ export class KlapTransport {
 
     const doSend = async (): Promise<object> => {
       const session = this.session!;
-      const payload = Buffer.from(JSON.stringify(request), 'utf-8');
+      const payload = Buffer.from(JSON.stringify(request), "utf-8");
 
       const { encryptedData, seq: newSeq } = klapEncrypt(
         payload,
@@ -292,7 +289,7 @@ export class KlapTransport {
         `${this.baseUrl}/app/request?seq=${newSeq}`,
         encryptedData,
         {
-          'Content-Type': 'application/octet-stream',
+          "Content-Type": "application/octet-stream",
           Cookie: session.cookie,
         },
         this.timeout,
@@ -316,7 +313,7 @@ export class KlapTransport {
         newSeq,
       );
 
-      return JSON.parse(decrypted.toString('utf-8'));
+      return JSON.parse(decrypted.toString("utf-8"));
     };
 
     try {
@@ -352,9 +349,9 @@ export interface AesTransportOptions {
 }
 
 const AES_COMMON_HEADERS: Record<string, string> = {
-  'Content-Type': 'application/json',
-  requestByApp: 'true',
-  Accept: 'application/json',
+  "Content-Type": "application/json",
+  requestByApp: "true",
+  Accept: "application/json",
 };
 
 /**
@@ -396,7 +393,7 @@ export class AesTransport {
     const { publicKey, privateKey } = generateAesKeyPair();
 
     const handshakeBody = JSON.stringify({
-      method: 'handshake',
+      method: "handshake",
       params: { key: publicKey },
     });
 
@@ -413,7 +410,7 @@ export class AesTransport {
       );
     }
 
-    const hsResult = JSON.parse(hsResp.body.toString('utf-8'));
+    const hsResult = JSON.parse(hsResp.body.toString("utf-8"));
 
     if (hsResult.error_code !== 0) {
       throw new Error(
@@ -433,15 +430,13 @@ export class AesTransport {
     // Parse timeout for session expiry
     const timeoutSec = parseTimeoutCookie(hsResp.headers);
     const bufferMs = 20 * 60 * 1000;
-    const expiresIn = timeoutSec
-      ? timeoutSec * 1000 - bufferMs
-      : SESSION_TTL_MS;
+    const expiresIn = timeoutSec ? timeoutSec * 1000 - bufferMs : SESSION_TTL_MS;
 
     // -- Step 2: Login --
     const loginHash = generateAesLoginHash(this.credentials);
 
     const loginRequest = JSON.stringify({
-      method: 'login_device',
+      method: "login_device",
       params: {
         username: loginHash.username,
         password: loginHash.password,
@@ -452,7 +447,7 @@ export class AesTransport {
     const encryptedLogin = aesEncrypt(loginRequest, key, iv);
 
     const loginBody = JSON.stringify({
-      method: 'securePassthrough',
+      method: "securePassthrough",
       params: { request: encryptedLogin },
     });
 
@@ -472,7 +467,7 @@ export class AesTransport {
       );
     }
 
-    const loginResult = JSON.parse(loginResp.body.toString('utf-8'));
+    const loginResult = JSON.parse(loginResp.body.toString("utf-8"));
 
     if (loginResult.error_code !== 0) {
       throw new Error(
@@ -520,7 +515,7 @@ export class AesTransport {
       const encrypted = aesEncrypt(payload, session.key, session.iv);
 
       const body = JSON.stringify({
-        method: 'securePassthrough',
+        method: "securePassthrough",
         params: { request: encrypted },
       });
 
@@ -540,7 +535,7 @@ export class AesTransport {
         );
       }
 
-      const result = JSON.parse(resp.body.toString('utf-8'));
+      const result = JSON.parse(resp.body.toString("utf-8"));
 
       // Check for authentication errors in the outer response
       if (result.error_code !== 0) {
@@ -552,9 +547,7 @@ export class AesTransport {
             `AES request auth error from ${this.host}: error_code=${code}`,
           );
         }
-        throw new Error(
-          `AES request error from ${this.host}: error_code=${code}`,
-        );
+        throw new Error(`AES request error from ${this.host}: error_code=${code}`);
       }
 
       // Decrypt the inner response
@@ -587,6 +580,6 @@ export class AesTransport {
 class AuthError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'AuthError';
+    this.name = "AuthError";
   }
 }

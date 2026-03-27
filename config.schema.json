@@ -243,12 +243,7 @@
       "title": "Advanced Settings (Optional)",
       "description": "Don't change these, unless you understand what you're doing.",
       "expandable": true,
-      "items": [
-        "timeout",
-        "waitTimeUpdate",
-        "transport",
-        "devicesUseDiscoveryPort"
-      ]
+      "items": ["timeout", "waitTimeUpdate", "transport", "devicesUseDiscoveryPort"]
     }
   ]
 }

@@ -1,14 +1,14 @@
-import { Service } from 'hap-nodejs';
+import { Service } from "hap-nodejs";
 
-import { deferAndCombine, delay, isObjectLike, lookup } from '../src/utils';
+import { deferAndCombine, delay, isObjectLike, lookup } from "../src/utils";
 
-describe('utils', function () {
-  describe('deferAndCombine', function () {
+describe("utils", () => {
+  describe("deferAndCombine", () => {
     let spy: jest.Mock;
     let deferredFn: () => Promise<unknown>;
     const deferTime = 100;
 
-    beforeEach(function () {
+    beforeEach(() => {
       let index = 0;
       spy = jest.fn();
       deferredFn = deferAndCombine(() => {
@@ -21,33 +21,25 @@ describe('utils', function () {
     });
 
     it(
-      'should batch 3 calls made within the timeout',
-      async function () {
+      "should batch 3 calls made within the timeout",
+      async () => {
         const startTimer = Date.now();
-        const results = await Promise.all([
-          deferredFn(),
-          deferredFn(),
-          deferredFn(),
-        ]);
+        const results = await Promise.all([deferredFn(), deferredFn(), deferredFn()]);
         expect(Date.now() - startTimer).toBeGreaterThanOrEqual(deferTime);
         expect(Date.now() - startTimer).toBeLessThanOrEqual(deferTime * 1.1);
         expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith(1);
         expect(results).toEqual([1, 1, 1]);
       },
-      deferTime * 2
+      deferTime * 2,
     );
 
     it(
-      'should separately batch calls made outside the timeout',
-      async function () {
+      "should separately batch calls made outside the timeout",
+      async () => {
         const startTimer = Date.now();
 
-        const batchOne = Promise.all([
-          deferredFn(),
-          deferredFn(),
-          deferredFn(),
-        ]);
+        const batchOne = Promise.all([deferredFn(), deferredFn(), deferredFn()]);
 
         await delay(deferTime);
         const batchTwo = Promise.all([deferredFn(), deferredFn()]);
@@ -64,40 +56,38 @@ describe('utils', function () {
         expect(resultsOne).toEqual([1, 1, 1]);
         expect(resultsTwo).toEqual([2, 2]);
       },
-      deferTime * 4
+      deferTime * 4,
     );
   });
 
-  describe('lookup', function () {
-    it('should lookup with default compareFn', function () {
-      expect(lookup({ aKey: 'a', bKey: 'b' }, undefined, 'a')).toEqual('aKey');
+  describe("lookup", () => {
+    it("should lookup with default compareFn", () => {
+      expect(lookup({ aKey: "a", bKey: "b" }, undefined, "a")).toEqual("aKey");
     });
 
-    it('should lookup with compareFn', function () {
+    it("should lookup with compareFn", () => {
       expect(
         lookup(
-          { aKey: { key: 'a' }, bKey: { key: 'b' } },
+          { aKey: { key: "a" }, bKey: { key: "b" } },
           (objProp, search) =>
-            isObjectLike(objProp) && 'key' in objProp && objProp.key === search,
-          'b'
-        )
-      ).toEqual('bKey');
+            isObjectLike(objProp) && "key" in objProp && objProp.key === search,
+          "b",
+        ),
+      ).toEqual("bKey");
     });
 
-    it('should lookup Service', function () {
+    it("should lookup Service", () => {
       expect(
         lookup(
           Service,
           (objProp, search) => {
             return (
-              isObjectLike(objProp) &&
-              'UUID' in objProp &&
-              objProp.UUID === search.UUID
+              isObjectLike(objProp) && "UUID" in objProp && objProp.UUID === search.UUID
             );
           },
-          Service.Outlet
-        )
-      ).toEqual('Outlet');
+          Service.Outlet,
+        ),
+      ).toEqual("Outlet");
     });
   });
 });

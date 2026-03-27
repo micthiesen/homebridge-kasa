@@ -6,20 +6,20 @@
  * device layer.
  */
 
-import { EventEmitter } from 'events';
-import * as net from 'node:net';
-import * as http from 'node:http';
-import * as crypto from 'node:crypto';
+import * as crypto from "node:crypto";
+import { EventEmitter } from "node:events";
+import * as http from "node:http";
+import * as net from "node:net";
 
-import { KlapPlug, KlapBulb } from './adapter';
-import { KlapTransport, AesTransport } from './transport';
+import { KlapBulb, KlapPlug } from "./adapter";
+import { AesTransport, KlapTransport } from "./transport";
 import type {
-  KasaCredentials,
-  TransportType,
-  DeviceSysinfo,
-  PlugSysinfoLike,
   BulbSysinfoLike,
-} from './types';
+  DeviceSysinfo,
+  KasaCredentials,
+  PlugSysinfoLike,
+  TransportType,
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,11 +56,7 @@ const TCP_PROBE_TIMEOUT = 2_000;
 /**
  * Quick TCP connect check to see if a port is open.
  */
-function isPortOpen(
-  host: string,
-  port: number,
-  timeoutMs: number,
-): Promise<boolean> {
+function isPortOpen(host: string, port: number, timeoutMs: number): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = new net.Socket();
 
@@ -71,17 +67,17 @@ function isPortOpen(
 
     socket.setTimeout(timeoutMs);
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       cleanup();
       resolve(true);
     });
 
-    socket.on('timeout', () => {
+    socket.on("timeout", () => {
       cleanup();
       resolve(false);
     });
 
-    socket.on('error', () => {
+    socket.on("error", () => {
       cleanup();
       resolve(false);
     });
@@ -101,35 +97,35 @@ function httpPost(
 ): Promise<{ statusCode: number; body: Buffer }> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
-    const reqBody = typeof body === 'string' ? Buffer.from(body, 'utf-8') : body;
+    const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
 
     const req = http.request(
       {
         hostname: parsed.hostname,
         port: parsed.port || 80,
         path: parsed.pathname + parsed.search,
-        method: 'POST',
+        method: "POST",
         headers: {
           ...headers,
-          'Content-Length': String(reqBody.length),
+          "Content-Length": String(reqBody.length),
         },
         timeout: timeoutMs,
       },
       (res) => {
         const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => {
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => {
           resolve({
             statusCode: res.statusCode ?? 0,
             body: Buffer.concat(chunks),
           });
         });
-        res.on('error', reject);
+        res.on("error", reject);
       },
     );
 
-    req.on('error', reject);
-    req.on('timeout', () => {
+    req.on("error", reject);
+    req.on("timeout", () => {
       req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms`));
     });
 
@@ -143,10 +139,10 @@ function httpPost(
  * Returns the 254 usable host IPs (.1 through .254).
  */
 function subnetIpsFromBroadcast(broadcast: string): string[] {
-  const parts = broadcast.split('.');
+  const parts = broadcast.split(".");
   if (parts.length !== 4) return [];
 
-  const prefix = parts.slice(0, 3).join('.');
+  const prefix = parts.slice(0, 3).join(".");
   const ips: string[] = [];
   for (let i = 1; i <= 254; i += 1) {
     ips.push(`${prefix}.${i}`);
@@ -169,11 +165,11 @@ async function detectProtocol(
     const resp = await httpPost(
       `http://${host}:${port}/app/handshake1`,
       seed,
-      { 'Content-Type': 'application/octet-stream' },
+      { "Content-Type": "application/octet-stream" },
       timeoutMs,
     );
     if (resp.statusCode === 200) {
-      return 'klap';
+      return "klap";
     }
   } catch {
     // Connection failed or timed out, try AES next
@@ -183,17 +179,17 @@ async function detectProtocol(
   try {
     const resp = await httpPost(
       `http://${host}:${port}/app`,
-      JSON.stringify({ method: 'handshake', params: { key: '' } }),
-      { 'Content-Type': 'application/json' },
+      JSON.stringify({ method: "handshake", params: { key: "" } }),
+      { "Content-Type": "application/json" },
       timeoutMs,
     );
     if (resp.statusCode === 200) {
       try {
-        const result = JSON.parse(resp.body.toString('utf-8'));
+        const result = JSON.parse(resp.body.toString("utf-8"));
         // AES devices respond with error_code (even if non-zero, it means the
         // endpoint exists and speaks the AES protocol)
         if (result.error_code !== undefined) {
-          return 'aes';
+          return "aes";
         }
       } catch {
         // Not JSON, not an AES device
@@ -209,15 +205,13 @@ async function detectProtocol(
 /**
  * Determine device type from sysinfo's type or mic_type field.
  */
-function classifyDevice(
-  sysinfo: DeviceSysinfo,
-): 'plug' | 'bulb' | null {
-  const typeStr = (sysinfo.type ?? sysinfo.mic_type ?? '').toUpperCase();
-  if (typeStr.includes('SMARTPLUGSWITCH')) return 'plug';
-  if (typeStr.includes('KASAPLUG')) return 'plug'; // SMART.KASAPLUG
-  if (typeStr.includes('KASASWITCH')) return 'plug'; // SMART.KASASWITCH
-  if (typeStr.includes('SMARTBULB')) return 'bulb';
-  if (typeStr.includes('KASABULB')) return 'bulb'; // SMART.KASABULB
+function classifyDevice(sysinfo: DeviceSysinfo): "plug" | "bulb" | null {
+  const typeStr = (sysinfo.type ?? sysinfo.mic_type ?? "").toUpperCase();
+  if (typeStr.includes("SMARTPLUGSWITCH")) return "plug";
+  if (typeStr.includes("KASAPLUG")) return "plug"; // SMART.KASAPLUG
+  if (typeStr.includes("KASASWITCH")) return "plug"; // SMART.KASASWITCH
+  if (typeStr.includes("SMARTBULB")) return "bulb";
+  if (typeStr.includes("KASABULB")) return "bulb"; // SMART.KASABULB
   return null;
 }
 
@@ -225,19 +219,22 @@ function classifyDevice(
  * Translate a SMART protocol get_device_info response into DeviceSysinfo.
  */
 function smartInfoToSysinfo(info: Record<string, unknown>): DeviceSysinfo {
-  let alias = String(info.nickname ?? info.alias ?? '');
+  let alias = String(info.nickname ?? info.alias ?? "");
   try {
-    if (info.nickname) alias = Buffer.from(String(info.nickname), 'base64').toString('utf-8');
-  } catch { /* use raw value */ }
+    if (info.nickname)
+      alias = Buffer.from(String(info.nickname), "base64").toString("utf-8");
+  } catch {
+    /* use raw value */
+  }
 
   return {
-    deviceId: String(info.device_id ?? ''),
+    deviceId: String(info.device_id ?? ""),
     alias,
-    model: String(info.model ?? ''),
-    mac: String(info.mac ?? '').replace(/-/g, ':'),
-    sw_ver: String(info.fw_ver ?? ''),
-    hw_ver: String(info.hw_ver ?? ''),
-    type: String(info.type ?? ''),
+    model: String(info.model ?? ""),
+    mac: String(info.mac ?? "").replace(/-/g, ":"),
+    sw_ver: String(info.fw_ver ?? ""),
+    hw_ver: String(info.hw_ver ?? ""),
+    type: String(info.type ?? ""),
     relay_state: info.device_on === true ? 1 : 0,
   };
 }
@@ -333,12 +330,10 @@ export class KlapDiscovery extends EventEmitter {
       const CONCURRENCY = 10;
       for (let i = 0; i < candidates.length; i += CONCURRENCY) {
         const batch = candidates.slice(i, i + CONCURRENCY);
-        await Promise.allSettled(
-          batch.map((c) => this.probeCandidate(c.host, c.port)),
-        );
+        await Promise.allSettled(batch.map((c) => this.probeCandidate(c.host, c.port)));
       }
     } catch (err) {
-      this.emit('error', err);
+      this.emit("error", err);
     } finally {
       this.discoveryInProgress = false;
     }
@@ -355,12 +350,12 @@ export class KlapDiscovery extends EventEmitter {
           await record.device.getSysInfo();
           if (!record.online) {
             record.online = true;
-            this.emit('device-online', record.device);
+            this.emit("device-online", record.device);
           }
         } catch {
           if (record.online) {
             record.online = false;
-            this.emit('device-offline', record.device);
+            this.emit("device-offline", record.device);
           }
         }
       },
@@ -373,9 +368,7 @@ export class KlapDiscovery extends EventEmitter {
    * Build the list of IPs to probe. Combines explicit device list with
    * optional subnet scanning.
    */
-  private async buildCandidateList(): Promise<
-    Array<{ host: string; port: number }>
-  > {
+  private async buildCandidateList(): Promise<Array<{ host: string; port: number }>> {
     // Collect all known hosts so we can skip them
     const knownHosts = new Set<string>();
     for (const record of this.knownDevices.values()) {
@@ -415,7 +408,7 @@ export class KlapDiscovery extends EventEmitter {
         );
 
         for (const result of results) {
-          if (result.status === 'fulfilled' && result.value.open) {
+          if (result.status === "fulfilled" && result.value.open) {
             candidates.push({ host: result.value.ip, port: 80 });
           }
         }
@@ -446,7 +439,7 @@ export class KlapDiscovery extends EventEmitter {
 
     // Create transport
     let transport: KlapTransport | AesTransport;
-    if (protocol === 'klap') {
+    if (protocol === "klap") {
       transport = new KlapTransport({
         host,
         port,
@@ -479,7 +472,7 @@ export class KlapDiscovery extends EventEmitter {
       })) as { system?: { get_sysinfo?: DeviceSysinfo } };
 
       const info = response?.system?.get_sysinfo;
-      if (info && info.deviceId) {
+      if (info?.deviceId) {
         sysinfo = info;
       }
     } catch {
@@ -490,10 +483,13 @@ export class KlapDiscovery extends EventEmitter {
       try {
         // Try SMART protocol: get_device_info
         const response = (await transport.send({
-          method: 'get_device_info',
+          method: "get_device_info",
         })) as { result?: Record<string, unknown> };
 
-        if (response?.result && (response.result.device_id || response.result.deviceId)) {
+        if (
+          response?.result &&
+          (response.result.device_id || response.result.deviceId)
+        ) {
           sysinfo = smartInfoToSysinfo(response.result);
         }
       } catch {
@@ -510,10 +506,10 @@ export class KlapDiscovery extends EventEmitter {
     const deviceClass = classifyDevice(sysinfo);
     if (deviceClass == null) {
       this.emit(
-        'error',
+        "error",
         new Error(
           `Unrecognized device type '${sysinfo.type ?? sysinfo.mic_type}' ` +
-            `for ${sysinfo.alias} (${sysinfo.model}) at ${host}`
+            `for ${sysinfo.alias} (${sysinfo.model}) at ${host}`,
         ),
       );
       transport.close();
@@ -530,26 +526,16 @@ export class KlapDiscovery extends EventEmitter {
       existingRecord.device.host = host;
       existingRecord.device.port = port;
       existingRecord.online = true;
-      this.emit('device-online', existingRecord.device);
+      this.emit("device-online", existingRecord.device);
       return;
     }
 
     // Create new adapter
     let device: KlapDevice;
-    if (deviceClass === 'plug') {
-      device = new KlapPlug(
-        host,
-        port,
-        sysinfo as PlugSysinfoLike,
-        transport,
-      );
+    if (deviceClass === "plug") {
+      device = new KlapPlug(host, port, sysinfo as PlugSysinfoLike, transport);
     } else {
-      device = new KlapBulb(
-        host,
-        port,
-        sysinfo as BulbSysinfoLike,
-        transport,
-      );
+      device = new KlapBulb(host, port, sysinfo as BulbSysinfoLike, transport);
     }
 
     // Track and emit
@@ -560,6 +546,6 @@ export class KlapDiscovery extends EventEmitter {
       online: true,
     });
 
-    this.emit('device-new', device);
+    this.emit("device-new", device);
   }
 }

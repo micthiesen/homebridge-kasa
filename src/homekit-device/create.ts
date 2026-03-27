@@ -1,14 +1,12 @@
-import type { PlatformAccessory } from 'homebridge';
-import type { Bulb, Plug } from 'tplink-smarthome-api';
-
-import type TplinkSmarthomePlatform from '../platform';
-import type { TplinkSmarthomeAccessoryContext } from '../platform';
-import type { TplinkDevice } from '../utils';
-
-import HomekitDevice from '.';
-import HomeKitDeviceBulb from './bulb';
-import HomeKitDevicePlug from './plug';
-import { TplinkSmarthomeConfig } from '../config';
+import type { PlatformAccessory } from "homebridge";
+import type { Bulb, Plug } from "tplink-smarthome-api";
+import type { TplinkSmarthomeConfig } from "../config";
+import type TplinkSmarthomePlatform from "../platform";
+import type { TplinkSmarthomeAccessoryContext } from "../platform";
+import type { TplinkDevice } from "../utils";
+import type HomekitDevice from ".";
+import HomeKitDeviceBulb from "./bulb";
+import HomeKitDevicePlug from "./plug";
 
 /**
  * Factory method to create a HomeKitDeviceBulb or HomeKitDevicePlug.
@@ -20,23 +18,21 @@ import { TplinkSmarthomeConfig } from '../config';
 export default function create(
   platform: TplinkSmarthomePlatform,
   config: TplinkSmarthomeConfig,
-  homebridgeAccessory:
-    | PlatformAccessory<TplinkSmarthomeAccessoryContext>
-    | undefined,
-  tplinkDevice: TplinkDevice
+  homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
+  tplinkDevice: TplinkDevice,
 ): HomekitDevice {
-  if (tplinkDevice.deviceType === 'bulb') {
+  if (tplinkDevice.deviceType === "bulb") {
     return new HomeKitDeviceBulb(
       platform,
       config,
       homebridgeAccessory,
-      tplinkDevice as unknown as Bulb
+      tplinkDevice as unknown as Bulb,
     );
   }
   return new HomeKitDevicePlug(
     platform,
     config,
     homebridgeAccessory,
-    tplinkDevice as unknown as Plug
+    tplinkDevice as unknown as Plug,
   );
 }

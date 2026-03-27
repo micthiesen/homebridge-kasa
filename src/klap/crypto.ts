@@ -9,28 +9,28 @@ import {
   createCipheriv,
   createDecipheriv,
   createHash,
+  constants as cryptoConstants,
   generateKeyPairSync,
   privateDecrypt,
   randomBytes,
-  constants as cryptoConstants,
-} from 'node:crypto';
+} from "node:crypto";
 
-import type { KasaCredentials } from './types';
+import type { KasaCredentials } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function sha256(data: Buffer): Buffer {
-  return createHash('sha256').update(data).digest();
+  return createHash("sha256").update(data).digest();
 }
 
 function sha1(data: Buffer): Buffer {
-  return createHash('sha1').update(data).digest();
+  return createHash("sha1").update(data).digest();
 }
 
 function sha1Hex(data: Buffer): string {
-  return createHash('sha1').update(data).digest('hex');
+  return createHash("sha1").update(data).digest("hex");
 }
 
 /** Pack a number as a big-endian signed 32-bit integer. */
@@ -139,25 +139,20 @@ export function deriveKlapKeys(
   authHash: Buffer,
 ): { key: Buffer; iv: Buffer; sig: Buffer; seq: number } {
   const keyPayload = Buffer.concat([
-    Buffer.from('lsk'),
+    Buffer.from("lsk"),
     localSeed,
     remoteSeed,
     authHash,
   ]);
   const key = sha256(keyPayload).subarray(0, 16);
 
-  const ivPayload = Buffer.concat([
-    Buffer.from('iv'),
-    localSeed,
-    remoteSeed,
-    authHash,
-  ]);
+  const ivPayload = Buffer.concat([Buffer.from("iv"), localSeed, remoteSeed, authHash]);
   const fullIv = sha256(ivPayload);
   const iv = fullIv.subarray(0, 12);
   const seq = readSignedInt32BE(fullIv);
 
   const sigPayload = Buffer.concat([
-    Buffer.from('ldk'),
+    Buffer.from("ldk"),
     localSeed,
     remoteSeed,
     authHash,
@@ -191,7 +186,7 @@ export function klapEncrypt(
 
   // AES-128-CBC encrypt with PKCS7 padding
   const padded = pkcs7Pad(data);
-  const cipher = createCipheriv('aes-128-cbc', key, fullIv);
+  const cipher = createCipheriv("aes-128-cbc", key, fullIv);
   cipher.setAutoPadding(false); // we already padded manually
   const ciphertext = Buffer.concat([cipher.update(padded), cipher.final()]);
 
@@ -230,15 +225,12 @@ export function klapDecrypt(
   const expectedSig = sha256(Buffer.concat([sig, seqBytes, ciphertext]));
   const actualSig = data.subarray(0, 32);
   if (!actualSig.equals(expectedSig)) {
-    throw new Error('KLAP decrypt: signature verification failed');
+    throw new Error("KLAP decrypt: signature verification failed");
   }
 
-  const decipher = createDecipheriv('aes-128-cbc', key, fullIv);
+  const decipher = createDecipheriv("aes-128-cbc", key, fullIv);
   decipher.setAutoPadding(false);
-  const decrypted = Buffer.concat([
-    decipher.update(ciphertext),
-    decipher.final(),
-  ]);
+  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
   return pkcs7Unpad(decrypted);
 }
@@ -257,16 +249,16 @@ export function generateAesKeyPair(): {
   publicKey: string;
   privateKey: string;
 } {
-  const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+  const { publicKey, privateKey } = generateKeyPairSync("rsa", {
     modulusLength: 1024,
     publicExponent: 65537,
     publicKeyEncoding: {
-      type: 'spki',
-      format: 'pem',
+      type: "spki",
+      format: "pem",
     },
     privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem',
+      type: "pkcs8",
+      format: "pem",
     },
   });
   return { publicKey, privateKey };
@@ -287,7 +279,7 @@ export function decryptAesSessionKey(
   encryptedKey: string,
   privateKey: string,
 ): { key: Buffer; iv: Buffer } {
-  const encryptedBytes = Buffer.from(encryptedKey, 'base64');
+  const encryptedBytes = Buffer.from(encryptedKey, "base64");
   const decrypted = privateDecrypt(
     {
       key: privateKey,
@@ -310,11 +302,11 @@ export function decryptAesSessionKey(
  * Reference: AesEncyptionSession.encrypt in aestransport.py
  */
 export function aesEncrypt(data: string, key: Buffer, iv: Buffer): string {
-  const padded = pkcs7Pad(Buffer.from(data, 'utf-8'));
-  const cipher = createCipheriv('aes-128-cbc', key, iv);
+  const padded = pkcs7Pad(Buffer.from(data, "utf-8"));
+  const cipher = createCipheriv("aes-128-cbc", key, iv);
   cipher.setAutoPadding(false);
   const encrypted = Buffer.concat([cipher.update(padded), cipher.final()]);
-  return encrypted.toString('base64');
+  return encrypted.toString("base64");
 }
 
 /**
@@ -325,14 +317,11 @@ export function aesEncrypt(data: string, key: Buffer, iv: Buffer): string {
  * Reference: AesEncyptionSession.decrypt in aestransport.py
  */
 export function aesDecrypt(data: string, key: Buffer, iv: Buffer): string {
-  const encrypted = Buffer.from(data, 'base64');
-  const decipher = createDecipheriv('aes-128-cbc', key, iv);
+  const encrypted = Buffer.from(data, "base64");
+  const decipher = createDecipheriv("aes-128-cbc", key, iv);
   decipher.setAutoPadding(false);
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]);
-  return pkcs7Unpad(decrypted).toString('utf-8');
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  return pkcs7Unpad(decrypted).toString("utf-8");
 }
 
 /**
@@ -348,7 +337,7 @@ export function generateAesLoginHash(credentials: KasaCredentials): {
   password: string;
 } {
   const usernameHex = sha1Hex(Buffer.from(credentials.username));
-  const username = Buffer.from(usernameHex).toString('base64');
-  const password = Buffer.from(credentials.password).toString('base64');
+  const username = Buffer.from(usernameHex).toString("base64");
+  const password = Buffer.from(credentials.password).toString("base64");
   return { username, password };
 }

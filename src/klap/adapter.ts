@@ -1,11 +1,11 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from "node:events";
 
 import type {
-  PlugSysinfoLike,
   BulbSysinfoLike,
-  LightStateLike,
   EmeterRealtime,
-} from './types';
+  LightStateLike,
+  PlugSysinfoLike,
+} from "./types";
 
 // Shared transport interface (both KlapTransport and AesTransport implement this)
 interface Transport {
@@ -13,7 +13,7 @@ interface Transport {
 }
 
 // Models known to support energy monitoring
-const EMETER_MODELS = ['HS110', 'HS300', 'KP115', 'KP125', 'EP25'];
+const EMETER_MODELS = ["HS110", "HS300", "KP115", "KP125", "EP25"];
 
 function modelSupportsEmeter(model: string): boolean {
   return EMETER_MODELS.some((m) => model.toUpperCase().includes(m));
@@ -30,30 +30,31 @@ function delay(ms: number): Promise<void> {
  * vs the legacy IOT protocol (e.g. HS103, HS110).
  */
 function isSmartDevice(typeField?: string): boolean {
-  return typeField?.toUpperCase().startsWith('SMART.') === true;
+  return typeField?.toUpperCase().startsWith("SMART.") === true;
 }
 
 /**
  * Translate a SMART protocol get_device_info response into the
  * PlugSysinfoLike shape expected by the HomeKit device classes.
  */
-function smartDeviceInfoToPlugSysinfo(
-  info: Record<string, unknown>,
-): PlugSysinfoLike {
+function smartDeviceInfoToPlugSysinfo(info: Record<string, unknown>): PlugSysinfoLike {
   // nickname is base64 encoded in SMART protocol
-  let alias = String(info.nickname ?? info.alias ?? '');
+  let alias = String(info.nickname ?? info.alias ?? "");
   try {
-    if (info.nickname) alias = Buffer.from(String(info.nickname), 'base64').toString('utf-8');
-  } catch { /* use raw value */ }
+    if (info.nickname)
+      alias = Buffer.from(String(info.nickname), "base64").toString("utf-8");
+  } catch {
+    /* use raw value */
+  }
 
   return {
-    deviceId: String(info.device_id ?? info.deviceId ?? ''),
+    deviceId: String(info.device_id ?? info.deviceId ?? ""),
     alias,
-    model: String(info.model ?? ''),
-    mac: String(info.mac ?? '').replace(/-/g, ':'),
-    sw_ver: String(info.fw_ver ?? info.sw_ver ?? ''),
-    hw_ver: String(info.hw_ver ?? ''),
-    type: String(info.type ?? ''),
+    model: String(info.model ?? ""),
+    mac: String(info.mac ?? "").replace(/-/g, ":"),
+    sw_ver: String(info.fw_ver ?? info.sw_ver ?? ""),
+    hw_ver: String(info.hw_ver ?? ""),
+    type: String(info.type ?? ""),
     relay_state: info.device_on === true ? 1 : 0,
   };
 }
@@ -65,14 +66,20 @@ function smartDeviceInfoToPlugSysinfo(
 function normaliseEmeterRealtime(rt: Record<string, unknown>): EmeterRealtime {
   const num = (key: string): number | undefined => {
     const v = rt[key];
-    return typeof v === 'number' ? v : undefined;
+    return typeof v === "number" ? v : undefined;
   };
 
   return {
-    current: num('current') ?? (num('current_ma') != null ? num('current_ma')! / 1000 : undefined),
-    power: num('power') ?? (num('power_mw') != null ? num('power_mw')! / 1000 : undefined),
-    voltage: num('voltage') ?? (num('voltage_mv') != null ? num('voltage_mv')! / 1000 : undefined),
-    total: num('total') ?? (num('total_wh') != null ? num('total_wh')! / 1000 : undefined),
+    current:
+      num("current") ??
+      (num("current_ma") != null ? num("current_ma")! / 1000 : undefined),
+    power:
+      num("power") ?? (num("power_mw") != null ? num("power_mw")! / 1000 : undefined),
+    voltage:
+      num("voltage") ??
+      (num("voltage_mv") != null ? num("voltage_mv")! / 1000 : undefined),
+    total:
+      num("total") ?? (num("total_wh") != null ? num("total_wh")! / 1000 : undefined),
   };
 }
 
@@ -122,7 +129,7 @@ export class KlapPlug extends EventEmitter {
       },
       setBrightness: async (value: number): Promise<unknown> => {
         const response = await this.transport.send({
-          'smartlife.iot.dimmer': { set_brightness: { brightness: value } },
+          "smartlife.iot.dimmer": { set_brightness: { brightness: value } },
         });
         this._sysInfo.brightness = value;
         return response;
@@ -137,15 +144,12 @@ export class KlapPlug extends EventEmitter {
         if (this._isSmart) {
           // SMART protocol: get_emeter_data returns milli-units directly
           const response = (await this.transport.send({
-            method: 'get_emeter_data',
+            method: "get_emeter_data",
           })) as { result?: Record<string, unknown> };
 
           const rt = response?.result;
           if (rt) {
-            Object.assign(
-              this.emeter.realtime,
-              normaliseEmeterRealtime(rt),
-            );
+            Object.assign(this.emeter.realtime, normaliseEmeterRealtime(rt));
           }
         } else {
           // Legacy IOT protocol
@@ -162,7 +166,7 @@ export class KlapPlug extends EventEmitter {
           }
         }
 
-        this.emit('emeter-realtime-update', this.emeter.realtime);
+        this.emit("emeter-realtime-update", this.emeter.realtime);
         return this.emeter.realtime;
       },
     };
@@ -194,8 +198,8 @@ export class KlapPlug extends EventEmitter {
     return this._sysInfo.hw_ver;
   }
 
-  get deviceType(): 'plug' {
-    return 'plug';
+  get deviceType(): "plug" {
+    return "plug";
   }
 
   get host(): string {
@@ -250,7 +254,7 @@ export class KlapPlug extends EventEmitter {
     if (this._isSmart) {
       // SMART protocol: get_device_info
       const response = (await this.transport.send({
-        method: 'get_device_info',
+        method: "get_device_info",
       })) as { result?: Record<string, unknown> };
 
       if (response?.result) {
@@ -274,16 +278,16 @@ export class KlapPlug extends EventEmitter {
 
       // Emit events by diffing
       if (this._sysInfo.relay_state !== oldRelayState) {
-        this.emit('power-update', this.relayState);
+        this.emit("power-update", this.relayState);
       }
       if (this.inUse !== oldInUse) {
-        this.emit('in-use-update', this.inUse);
+        this.emit("in-use-update", this.inUse);
       }
       if (
         this._sysInfo.brightness != null &&
         this._sysInfo.brightness !== oldBrightness
       ) {
-        this.emit('brightness-update', this._sysInfo.brightness);
+        this.emit("brightness-update", this._sysInfo.brightness);
       }
     }
 
@@ -293,7 +297,7 @@ export class KlapPlug extends EventEmitter {
   async setPowerState(value: boolean): Promise<true> {
     if (this._isSmart) {
       await this.transport.send({
-        method: 'set_device_info',
+        method: "set_device_info",
         params: { device_on: value },
       });
     } else {
@@ -335,9 +339,7 @@ const COLOR_TEMP_RANGES: Record<string, { min: number; max: number }> = {
   KL430: { min: 2500, max: 9000 },
 };
 
-function getColorTempRange(
-  model: string,
-): { min: number; max: number } | null {
+function getColorTempRange(model: string): { min: number; max: number } | null {
   for (const [prefix, range] of Object.entries(COLOR_TEMP_RANGES)) {
     if (model.toUpperCase().includes(prefix)) {
       return range;
@@ -378,11 +380,9 @@ export class KlapBulb extends EventEmitter {
 
     // -- lighting sub-object --
     this.lighting = {
-      setLightState: async (
-        state: Partial<LightStateLike>,
-      ): Promise<true> => {
+      setLightState: async (state: Partial<LightStateLike>): Promise<true> => {
         await this.transport.send({
-          'smartlife.iot.smartbulb.lightingservice': {
+          "smartlife.iot.smartbulb.lightingservice": {
             transition_light_state: state,
           },
         });
@@ -407,7 +407,7 @@ export class KlapBulb extends EventEmitter {
 
         try {
           const smartResp = (await this.transport.send({
-            method: 'get_emeter_data',
+            method: "get_emeter_data",
           })) as { result?: Record<string, unknown> };
           if (smartResp?.result && Object.keys(smartResp.result).length > 0) {
             rt = smartResp.result;
@@ -424,13 +424,10 @@ export class KlapBulb extends EventEmitter {
         }
 
         if (rt) {
-          Object.assign(
-            this.emeter.realtime,
-            normaliseEmeterRealtime(rt),
-          );
+          Object.assign(this.emeter.realtime, normaliseEmeterRealtime(rt));
         }
 
-        this.emit('emeter-realtime-update', this.emeter.realtime);
+        this.emit("emeter-realtime-update", this.emeter.realtime);
         return this.emeter.realtime;
       },
     };
@@ -462,8 +459,8 @@ export class KlapBulb extends EventEmitter {
     return this._sysInfo.hw_ver;
   }
 
-  get deviceType(): 'bulb' {
-    return 'bulb';
+  get deviceType(): "bulb" {
+    return "bulb";
   }
 
   get host(): string {
@@ -486,22 +483,17 @@ export class KlapBulb extends EventEmitter {
 
   get supportsBrightness(): boolean {
     return (
-      this._sysInfo.is_dimmable === 1 ||
-      this._sysInfo.light_state.brightness != null
+      this._sysInfo.is_dimmable === 1 || this._sysInfo.light_state.brightness != null
     );
   }
 
   get supportsColor(): boolean {
-    return (
-      this._sysInfo.is_color === 1 ||
-      this._sysInfo.light_state.hue != null
-    );
+    return this._sysInfo.is_color === 1 || this._sysInfo.light_state.hue != null;
   }
 
   get supportsColorTemperature(): boolean {
     return (
-      this._sysInfo.is_variable_color_temp === 1 ||
-      this.colorTemperatureRange != null
+      this._sysInfo.is_variable_color_temp === 1 || this.colorTemperatureRange != null
     );
   }
 
@@ -541,17 +533,17 @@ export class KlapBulb extends EventEmitter {
       // Emit on/off events
       if (newLightState.on_off !== oldLightState.on_off) {
         if (newLightState.on_off === 1) {
-          this.emit('lightstate-on');
-          this.emit('lightstate-sysinfo-on');
+          this.emit("lightstate-on");
+          this.emit("lightstate-sysinfo-on");
         } else {
-          this.emit('lightstate-off');
-          this.emit('lightstate-sysinfo-off');
+          this.emit("lightstate-off");
+          this.emit("lightstate-sysinfo-off");
         }
       }
 
       // Emit update events (always, so listeners can react to any change)
-      this.emit('lightstate-update', newLightState);
-      this.emit('lightstate-sysinfo-update', newLightState);
+      this.emit("lightstate-update", newLightState);
+      this.emit("lightstate-sysinfo-update", newLightState);
     }
 
     return this._sysInfo;

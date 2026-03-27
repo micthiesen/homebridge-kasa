@@ -1,18 +1,18 @@
-import { EventEmitter } from 'events';
-import { HomebridgeAPI } from 'homebridge/lib/api';
+import { EventEmitter } from "node:events";
+import { HomebridgeAPI } from "homebridge/lib/api";
 // const rewire = require('rewire');
 
-import TplinkSmarthomePlatform from '../src/platform';
+import TplinkSmarthomePlatform from "../src/platform";
 
 // const { TplinkAccessory } = require('../lib/tplink-accessory');
 
 import {
   platformAccessories,
   platformAccessoriesIssues,
-} from './fixtures/platform-accessories';
+} from "./fixtures/platform-accessories";
 
 const log = () => {};
-log.prefix = '';
+log.prefix = "";
 log.debug = () => {};
 log.error = () => {};
 log.info = () => {};
@@ -20,23 +20,23 @@ log.success = () => {};
 log.log = () => {};
 log.warn = () => {};
 
-describe('TplinkSmarthomePlatform', function () {
+describe("TplinkSmarthomePlatform", () => {
   let platform: TplinkSmarthomePlatform;
   let tplinkDevice: EventEmitter;
-  beforeEach(function () {
+  beforeEach(() => {
     platform = new TplinkSmarthomePlatform(
       log,
-      { platform: '', name: 'tplink' },
-      new HomebridgeAPI()
+      { platform: "", name: "tplink" },
+      new HomebridgeAPI(),
     );
 
     tplinkDevice = new EventEmitter();
     Object.assign(tplinkDevice, {
-      id: 'ABC',
-      deviceType: 'plug',
-      model: 'HS100',
+      id: "ABC",
+      deviceType: "plug",
+      model: "HS100",
       supportsDimmer: false,
-      alias: 'TEST',
+      alias: "TEST",
     });
   });
 
@@ -51,42 +51,37 @@ describe('TplinkSmarthomePlatform', function () {
   //   });
   // });
 
-  describe('#addAccessory', function () {
-    it.skip('should add platformAccessory to #homebridgeAccessories', function () {});
+  describe("#addAccessory", () => {
+    it.skip("should add platformAccessory to #homebridgeAccessories", () => {});
   });
 
-  describe('#configureAccessory', function () {
-    platformAccessories.forEach(function (platformAccessory) {
-      describe(platformAccessory.displayName, function () {
-        it('should add platformAccessory to #configuredAccessories', function () {
+  describe("#configureAccessory", () => {
+    platformAccessories.forEach((platformAccessory) => {
+      describe(platformAccessory.displayName, () => {
+        it("should add platformAccessory to #configuredAccessories", () => {
           platform.configureAccessory(platformAccessory);
 
-          // eslint-disable-next-line @typescript-eslint/dot-notation
-          const hbAccessories = platform['configuredAccessories'];
+          // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
+          const hbAccessories = platform["configuredAccessories"];
 
           expect(hbAccessories).toBeInstanceOf(Map);
-          expect(hbAccessories).toHaveProperty('size', 1);
-          expect(hbAccessories.get(platformAccessory.UUID)).toBe(
-            platformAccessory
-          );
+          expect(hbAccessories).toHaveProperty("size", 1);
+          expect(hbAccessories.get(platformAccessory.UUID)).toBe(platformAccessory);
         });
       });
     });
 
-    describe('Context Missing', function () {
-      it('should add platformAccessory to #configuredAccessories', function () {
-        const platformAccessory =
-          platformAccessoriesIssues.get('CONTEXT_MISSING');
+    describe("Context Missing", () => {
+      it("should add platformAccessory to #configuredAccessories", () => {
+        const platformAccessory = platformAccessoriesIssues.get("CONTEXT_MISSING");
         platform.configureAccessory(platformAccessory);
 
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        const hbAccessories = platform['configuredAccessories'];
+        // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
+        const hbAccessories = platform["configuredAccessories"];
 
         expect(hbAccessories).toBeInstanceOf(Map);
-        expect(hbAccessories).toHaveProperty('size', 1);
-        expect(hbAccessories.get(platformAccessory.UUID)).toBe(
-          platformAccessory
-        );
+        expect(hbAccessories).toHaveProperty("size", 1);
+        expect(hbAccessories.get(platformAccessory.UUID)).toBe(platformAccessory);
       });
     });
   });

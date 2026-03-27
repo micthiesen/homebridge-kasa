@@ -1,17 +1,17 @@
-import type { CharacteristicProps } from 'homebridge';
+import type { CharacteristicProps } from "homebridge";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { Formats, Perms } from 'homebridge'; // enum
-import type { MarkOptional } from 'ts-essentials';
-import DefaultCharacteristicClass from './types';
+import { Formats, Perms } from "homebridge"; // enum
+import type { MarkOptional } from "ts-essentials";
+import type DefaultCharacteristicClass from "./types";
 
 export default function defaultCharacteristic(
-  Characteristic: typeof DefaultCharacteristicClass
+  Characteristic: typeof DefaultCharacteristicClass,
 ): typeof DefaultCharacteristicClass {
   return class DefaultCharacteristic extends Characteristic {
     constructor(
       displayName: string,
       UUID: string,
-      props?: MarkOptional<CharacteristicProps, 'format' | 'perms'>
+      props?: MarkOptional<CharacteristicProps, "format" | "perms">,
     ) {
       const combinedProps = {
         format: Formats.FLOAT,

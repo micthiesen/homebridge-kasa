@@ -1,20 +1,20 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { Categories } from 'homebridge'; // enum
-import type { PlatformAccessory, Service } from 'homebridge';
-import type { Bulb, LightState } from 'tplink-smarthome-api';
-import type { BulbSysinfoLightState } from 'tplink-smarthome-api/lib/bulb';
 
-import HomekitDevice from '.';
-import { TplinkSmarthomeConfig } from '../config';
-import type TplinkSmarthomePlatform from '../platform';
-import type { TplinkSmarthomeAccessoryContext } from '../platform';
+import type { PlatformAccessory, Service } from "homebridge";
+import { Categories } from "homebridge"; // enum
+import type { Bulb, LightState } from "tplink-smarthome-api";
+import type { BulbSysinfoLightState } from "tplink-smarthome-api/lib/bulb";
+import type { TplinkSmarthomeConfig } from "../config";
+import type TplinkSmarthomePlatform from "../platform";
+import type { TplinkSmarthomeAccessoryContext } from "../platform";
 import {
   deferAndCombine,
   delay,
   getOrAddCharacteristic,
   kelvinToMired,
   miredToKelvin,
-} from '../utils';
+} from "../utils";
+import HomekitDevice from ".";
 
 export default class HomeKitDeviceBulb extends HomekitDevice {
   private desiredLightState: LightState = {};
@@ -22,18 +22,10 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
   constructor(
     platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
-    homebridgeAccessory:
-      | PlatformAccessory<TplinkSmarthomeAccessoryContext>
-      | undefined,
-    readonly tplinkDevice: Bulb
+    homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
+    readonly tplinkDevice: Bulb,
   ) {
-    super(
-      platform,
-      config,
-      homebridgeAccessory,
-      tplinkDevice,
-      Categories.LIGHTBULB
-    );
+    super(platform, config, homebridgeAccessory, tplinkDevice, Categories.LIGHTBULB);
 
     const primaryService = this.addLightbulbService({
       supportsBrightness: tplinkDevice.supportsBrightness,
@@ -41,10 +33,7 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       supportsColor: tplinkDevice.supportsColor,
     });
 
-    if (
-      platform.config.addCustomCharacteristics &&
-      tplinkDevice.supportsEmeter
-    ) {
+    if (platform.config.addCustomCharacteristics && tplinkDevice.supportsEmeter) {
       this.addEnergyCharacteristics(primaryService);
     } else {
       this.removeEnergyCharacteristics(primaryService);
@@ -59,24 +48,20 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
 
     this.setLightState = deferAndCombine(
       (requestCount) => {
-        this.log.debug(
-          `executing deferred setLightState count: ${requestCount}`
-        );
+        this.log.debug(`executing deferred setLightState count: ${requestCount}`);
         if (Object.keys(this.desiredLightState).length === 0) {
-          this.log.warn('setLightState called with empty desiredLightState');
+          this.log.warn("setLightState called with empty desiredLightState");
           return Promise.resolve(true);
         }
 
-        const ret = this.tplinkDevice.lighting.setLightState(
-          this.desiredLightState
-        );
+        const ret = this.tplinkDevice.lighting.setLightState(this.desiredLightState);
         this.desiredLightState = {};
         return ret;
       },
       platform.config.waitTimeUpdate,
       (value: LightState) => {
         this.desiredLightState = Object.assign(this.desiredLightState, value);
-      }
+      },
     );
 
     this.getRealtime = deferAndCombine(() => {
@@ -123,7 +108,7 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
 
     const onCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      Characteristic.On
+      Characteristic.On,
     );
 
     onCharacteristic
@@ -133,38 +118,32 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       })
       .onSet(async (value) => {
         this.log.info(`Setting On to: ${value}`);
-        if (typeof value === 'boolean') {
+        if (typeof value === "boolean") {
           await this.setLightState({ on_off: value ? 1 : 0 });
           return;
         }
-        this.log.warn('setValue: Invalid On:', value);
+        this.log.warn("setValue: Invalid On:", value);
       });
 
-    this.tplinkDevice.on('lightstate-on', () => {
+    this.tplinkDevice.on("lightstate-on", () => {
       this.updateValue(lightbulbService, onCharacteristic, true);
     });
-    this.tplinkDevice.on('lightstate-sysinfo-on', () => {
+    this.tplinkDevice.on("lightstate-sysinfo-on", () => {
       this.updateValue(lightbulbService, onCharacteristic, true);
     });
-    this.tplinkDevice.on('lightstate-off', () => {
+    this.tplinkDevice.on("lightstate-off", () => {
       this.updateValue(lightbulbService, onCharacteristic, false);
     });
-    this.tplinkDevice.on('lightstate-sysinfo-off', () => {
+    this.tplinkDevice.on("lightstate-sysinfo-off", () => {
       this.updateValue(lightbulbService, onCharacteristic, false);
     });
-    const onUpdateListener = (
-      lightState: LightState | BulbSysinfoLightState
-    ) => {
+    const onUpdateListener = (lightState: LightState | BulbSysinfoLightState) => {
       if (lightState.on_off != null) {
-        this.updateValue(
-          lightbulbService,
-          onCharacteristic,
-          lightState.on_off === 1
-        );
+        this.updateValue(lightbulbService, onCharacteristic, lightState.on_off === 1);
       }
     };
-    this.tplinkDevice.on('lightstate-update', onUpdateListener);
-    this.tplinkDevice.on('lightstate-sysinfo-update', onUpdateListener);
+    this.tplinkDevice.on("lightstate-update", onUpdateListener);
+    this.tplinkDevice.on("lightstate-sysinfo-update", onUpdateListener);
 
     if (supportsBrightness) {
       this.addBrightnessCharacteristic(lightbulbService);
@@ -190,7 +169,7 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
   private addBrightnessCharacteristic(lightbulbService: Service) {
     const brightnessCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      this.platform.Characteristic.Brightness
+      this.platform.Characteristic.Brightness,
     );
 
     brightnessCharacteristic
@@ -201,42 +180,39 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       })
       .onSet(async (value) => {
         this.log.info(`Setting Brightness to: ${value}`);
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
           await this.setLightState({ brightness: value });
           return;
         }
-        this.log.warn('setValue: Invalid Brightness:', value);
+        this.log.warn("setValue: Invalid Brightness:", value);
       });
 
     const brightnessUpdateListener = (
-      lightState: LightState | BulbSysinfoLightState
+      lightState: LightState | BulbSysinfoLightState,
     ) => {
       if (lightState.brightness != null) {
         this.updateValue(
           lightbulbService,
           brightnessCharacteristic,
-          lightState.brightness
+          lightState.brightness,
         );
       }
     };
-    this.tplinkDevice.on('lightstate-update', brightnessUpdateListener);
-    this.tplinkDevice.on('lightstate-sysinfo-update', brightnessUpdateListener);
+    this.tplinkDevice.on("lightstate-update", brightnessUpdateListener);
+    this.tplinkDevice.on("lightstate-sysinfo-update", brightnessUpdateListener);
 
     return brightnessCharacteristic;
   }
 
   private removeBrightnessCharacteristic(service: Service) {
-    this.removeCharacteristicIfExists(
-      service,
-      this.platform.Characteristic.Brightness
-    );
+    this.removeCharacteristicIfExists(service, this.platform.Characteristic.Brightness);
   }
 
   private addColorTemperatureCharacteristic(lightbulbService: Service) {
     const range = this.tplinkDevice.colorTemperatureRange;
 
     if (range == null) {
-      this.log.error('Could not retrieve color temperature range');
+      this.log.error("Could not retrieve color temperature range");
       return undefined;
     }
 
@@ -244,7 +220,7 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
 
     const colorTemperatureCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      this.platform.Characteristic.ColorTemperature
+      this.platform.Characteristic.ColorTemperature,
     );
 
     colorTemperatureCharacteristic.setProps({
@@ -258,16 +234,16 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
         const ls = this.tplinkDevice.sysInfo.light_state;
 
         // immediately returned cached value
-        if (typeof ls.color_temp === 'number' && ls.color_temp > 0) {
+        if (typeof ls.color_temp === "number" && ls.color_temp > 0) {
           return Math.round(kelvinToMired(ls.color_temp));
         }
         if (
-          typeof ls.dft_on_state?.color_temp === 'number' &&
+          typeof ls.dft_on_state?.color_temp === "number" &&
           ls.dft_on_state.color_temp > 0
         ) {
           return Math.round(kelvinToMired(ls.dft_on_state.color_temp));
         }
-        if (!('color_temp' in ls)) {
+        if (!("color_temp" in ls)) {
           return Math.floor(kelvinToMired(min));
         }
 
@@ -275,32 +251,29 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       })
       .onSet(async (value) => {
         this.log.info(`Setting ColorTemperature to: ${value}`);
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
           await this.setLightState({
             color_temp: Math.round(miredToKelvin(value)),
           });
           return;
         }
-        this.log.warn('setValue: Invalid ColorTemperature:', value);
+        this.log.warn("setValue: Invalid ColorTemperature:", value);
       });
 
     if (colorTemperatureCharacteristic != null) {
       const colorTemperatureUpdateListener = (
-        lightState: LightState | BulbSysinfoLightState
+        lightState: LightState | BulbSysinfoLightState,
       ) => {
         if (lightState.color_temp != null && lightState.color_temp > 0) {
           this.updateValue(
             lightbulbService,
             colorTemperatureCharacteristic,
-            Math.round(kelvinToMired(lightState.color_temp))
+            Math.round(kelvinToMired(lightState.color_temp)),
           );
         }
       };
-      this.tplinkDevice.on('lightstate-update', colorTemperatureUpdateListener);
-      this.tplinkDevice.on(
-        'lightstate-sysinfo-update',
-        colorTemperatureUpdateListener
-      );
+      this.tplinkDevice.on("lightstate-update", colorTemperatureUpdateListener);
+      this.tplinkDevice.on("lightstate-sysinfo-update", colorTemperatureUpdateListener);
     }
 
     return colorTemperatureCharacteristic;
@@ -309,14 +282,14 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
   private removeColorTemperatureCharacteristic(service: Service) {
     this.removeCharacteristicIfExists(
       service,
-      this.platform.Characteristic.ColorTemperature
+      this.platform.Characteristic.ColorTemperature,
     );
   }
 
   private addColorCharacteristics(lightbulbService: Service) {
     const hueCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      this.platform.Characteristic.Hue
+      this.platform.Characteristic.Hue,
     );
 
     hueCharacteristic
@@ -327,16 +300,16 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       })
       .onSet(async (value) => {
         this.log.info(`Setting Hue to: ${value}`);
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
           await this.setLightState({ hue: value, color_temp: 0 });
           return;
         }
-        this.log.warn('setValue: Invalid Hue:', value);
+        this.log.warn("setValue: Invalid Hue:", value);
       });
 
     const saturationCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      this.platform.Characteristic.Saturation
+      this.platform.Characteristic.Saturation,
     );
 
     saturationCharacteristic
@@ -347,16 +320,14 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
       })
       .onSet(async (value) => {
         this.log.info(`Setting Saturation to: ${value}`);
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
           await this.setLightState({ saturation: value, color_temp: 0 });
           return;
         }
-        this.log.warn('setValue: Invalid Saturation:', value);
+        this.log.warn("setValue: Invalid Saturation:", value);
       });
 
-    const colorUpdateListener = (
-      lightState: LightState | BulbSysinfoLightState
-    ) => {
+    const colorUpdateListener = (lightState: LightState | BulbSysinfoLightState) => {
       if (lightState.color_temp != null && lightState.color_temp > 0) {
         this.updateValue(lightbulbService, hueCharacteristic, 0);
         this.updateValue(lightbulbService, saturationCharacteristic, 0);
@@ -368,30 +339,29 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
           this.updateValue(
             lightbulbService,
             saturationCharacteristic,
-            lightState.saturation
+            lightState.saturation,
           );
         }
       }
     };
-    this.tplinkDevice.on('lightstate-update', colorUpdateListener);
-    this.tplinkDevice.on('lightstate-sysinfo-update', colorUpdateListener);
+    this.tplinkDevice.on("lightstate-update", colorUpdateListener);
+    this.tplinkDevice.on("lightstate-sysinfo-update", colorUpdateListener);
 
     return { hueCharacteristic, saturationCharacteristic };
   }
 
   private removeColorCharacteristics(service: Service) {
-    [
-      this.platform.Characteristic.Hue,
-      this.platform.Characteristic.Saturation,
-    ].forEach((c) => {
-      this.removeCharacteristicIfExists(service, c);
-    });
+    [this.platform.Characteristic.Hue, this.platform.Characteristic.Saturation].forEach(
+      (c) => {
+        this.removeCharacteristicIfExists(service, c);
+      },
+    );
   }
 
   private addEnergyCharacteristics(lightbulbService: Service) {
     const wattsCharacteristic = getOrAddCharacteristic(
       lightbulbService,
-      this.platform.customCharacteristics.Watts
+      this.platform.customCharacteristics.Watts,
     );
 
     wattsCharacteristic.onGet(() => {
@@ -399,18 +369,18 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
 
       // immediately returned cached value
       const emeterRealtime = this.tplinkDevice.emeter.realtime;
-      if (typeof emeterRealtime.power === 'number') {
+      if (typeof emeterRealtime.power === "number") {
         return emeterRealtime.power;
       }
       this.log.warn(`getValue: Invalid Watts:`, emeterRealtime.power);
       return null;
     });
 
-    this.tplinkDevice.on('emeter-realtime-update', (emeterRealtime) => {
+    this.tplinkDevice.on("emeter-realtime-update", (emeterRealtime) => {
       this.updateValue(
         lightbulbService,
         wattsCharacteristic,
-        emeterRealtime.power ?? new Error('Could not retrieve watts')
+        emeterRealtime.power ?? new Error("Could not retrieve watts"),
       );
     });
   }
@@ -418,7 +388,7 @@ export default class HomeKitDeviceBulb extends HomekitDevice {
   private removeEnergyCharacteristics(lightbulbService: Service) {
     this.removeCharacteristicIfExists(
       lightbulbService,
-      this.platform.customCharacteristics.Watts
+      this.platform.customCharacteristics.Watts,
     );
   }
 

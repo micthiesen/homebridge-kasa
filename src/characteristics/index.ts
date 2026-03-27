@@ -1,25 +1,21 @@
-import type {
-  Characteristic as CharacteristicClass,
-  WithUUID,
-} from 'homebridge';
-
-import DefaultCharacteristicImport from './default-characteristic';
-import AmperesImport from './amperes';
-import KilowattHoursImport from './kilowatt-hours';
-import KilowattVoltAmpereHourImport from './kilowatt-volt-ampere-hour';
-import VoltAmperesImport from './volt-amperes';
-import VoltsImport from './volts';
-import WattsImport from './watts';
+import type { Characteristic as CharacteristicClass, WithUUID } from "homebridge";
+import AmperesImport from "./amperes";
+import DefaultCharacteristicImport from "./default-characteristic";
+import KilowattHoursImport from "./kilowatt-hours";
+import KilowattVoltAmpereHourImport from "./kilowatt-volt-ampere-hour";
+import VoltAmperesImport from "./volt-amperes";
+import VoltsImport from "./volts";
+import WattsImport from "./watts";
 
 export default function characteristic(
-  Characteristic: typeof CharacteristicClass
+  Characteristic: typeof CharacteristicClass,
 ): Record<
-  | 'Amperes'
-  | 'KilowattHours'
-  | 'KilowattVoltAmpereHour'
-  | 'VoltAmperes'
-  | 'Volts'
-  | 'Watts',
+  | "Amperes"
+  | "KilowattHours"
+  | "KilowattVoltAmpereHour"
+  | "VoltAmperes"
+  | "Volts"
+  | "Watts",
   WithUUID<new () => CharacteristicClass>
 > {
   const DefaultCharacteristic = DefaultCharacteristicImport(Characteristic);

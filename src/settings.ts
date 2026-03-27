@@ -1,2 +1,2 @@
-export const PLATFORM_NAME = 'TplinkSmarthome';
-export const PLUGIN_NAME = 'homebridge-kasa';
+export const PLATFORM_NAME = "TplinkSmarthome";
+export const PLUGIN_NAME = "homebridge-kasa";

@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { PlatformAccessoryEvent } from 'homebridge'; // enum
+
+import chalk from "chalk";
 import type {
   Categories,
   Characteristic,
@@ -10,16 +11,15 @@ import type {
   PlatformAccessory,
   Service,
   WithUUID,
-} from 'homebridge';
+} from "homebridge";
+import { PlatformAccessoryEvent } from "homebridge"; // enum
 
-import chalk from 'chalk';
-
-import AccessoryInformation from '../accessory-information';
-import type { TplinkSmarthomeConfig } from '../config';
-import type TplinkSmarthomePlatform from '../platform';
-import type { TplinkSmarthomeAccessoryContext } from '../platform';
-import type { TplinkDevice } from '../utils';
-import { prefixLogger } from '../utils';
+import AccessoryInformation from "../accessory-information";
+import type { TplinkSmarthomeConfig } from "../config";
+import type TplinkSmarthomePlatform from "../platform";
+import type { TplinkSmarthomeAccessoryContext } from "../platform";
+import type { TplinkDevice } from "../utils";
+import { prefixLogger } from "../utils";
 
 export default abstract class HomekitDevice {
   readonly log: Logger;
@@ -28,7 +28,7 @@ export default abstract class HomekitDevice {
 
   private lsc: (
     serviceOrCharacteristic: Service | Characteristic | { UUID: string },
-    characteristic?: Characteristic | { UUID: string }
+    characteristic?: Characteristic | { UUID: string },
   ) => string;
 
   /**
@@ -37,33 +37,28 @@ export default abstract class HomekitDevice {
   constructor(
     readonly platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
-    homebridgeAccessory:
-      | PlatformAccessory<TplinkSmarthomeAccessoryContext>
-      | undefined,
+    homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
     readonly tplinkDevice: TplinkDevice,
-    readonly category: Categories
+    readonly category: Categories,
   ) {
-    this.log = prefixLogger(
-      platform.log,
-      () => `${chalk.blue(`[${this.name}]`)}`
-    );
+    this.log = prefixLogger(platform.log, () => `${chalk.blue(`[${this.name}]`)}`);
 
     this.lsc = this.platform.lsc.bind(this.platform);
 
-    const categoryName = platform.getCategoryName(category) ?? '';
+    const categoryName = platform.getCategoryName(category) ?? "";
 
     if (homebridgeAccessory == null) {
       const uuid = platform.api.hap.uuid.generate(this.id);
 
       this.log.debug(
-        `Creating new Accessory [${this.id}] [${uuid}] category: ${categoryName}`
+        `Creating new Accessory [${this.id}] [${uuid}] category: ${categoryName}`,
       );
 
       // eslint-disable-next-line new-cap
       this.homebridgeAccessory = new platform.api.platformAccessory(
         this.name,
         uuid,
-        category
+        category,
       );
 
       this.homebridgeAccessory.context.deviceId = this.id;
@@ -72,14 +67,14 @@ export default abstract class HomekitDevice {
       this.homebridgeAccessory = homebridgeAccessory;
 
       this.log.debug(
-        `Existing Accessory found [${homebridgeAccessory.context.deviceId}] [${homebridgeAccessory.UUID}] category: ${categoryName}`
+        `Existing Accessory found [${homebridgeAccessory.context.deviceId}] [${homebridgeAccessory.UUID}] category: ${categoryName}`,
       );
       this.homebridgeAccessory.displayName = this.name;
       if (this.homebridgeAccessory.category !== category) {
         this.log.warn(
           `Correcting Accessory Category from: ${platform.getCategoryName(
-            this.homebridgeAccessory.category
-          )} to: ${categoryName}`
+            this.homebridgeAccessory.category,
+          )} to: ${categoryName}`,
         );
         this.homebridgeAccessory.category = category;
       }
@@ -89,10 +84,10 @@ export default abstract class HomekitDevice {
 
     const accInfo = AccessoryInformation(platform.api.hap)(
       this.homebridgeAccessory,
-      this
+      this,
     );
     if (accInfo == null) {
-      this.log.error('Could not retrieve default AccessoryInformation');
+      this.log.error("Could not retrieve default AccessoryInformation");
     }
 
     // Remove Old Services
@@ -104,7 +99,7 @@ export default abstract class HomekitDevice {
       this.log.warn(
         `Removing stale Service: ${this.lsc(service)} uuid:[%s] subtype:[%s]`,
         service.UUID,
-        service.subtype || ''
+        service.subtype || "",
       );
       this.homebridgeAccessory.removeService(service);
     });
@@ -124,7 +119,7 @@ export default abstract class HomekitDevice {
 
   // eslint-disable-next-line class-methods-use-this
   get manufacturer(): string {
-    return 'TP-Link';
+    return "TP-Link";
   }
 
   get model(): string {
@@ -148,7 +143,7 @@ export default abstract class HomekitDevice {
   updateValue(
     service: Service,
     characteristic: Characteristic,
-    value: Nullable<CharacteristicValue> | Error | HapStatusError
+    value: Nullable<CharacteristicValue> | Error | HapStatusError,
   ) {
     this.log.debug(`Updating ${this.lsc(service, characteristic)} ${value}`);
     characteristic.updateValue(value);
@@ -158,7 +153,7 @@ export default abstract class HomekitDevice {
     serviceConstructor:
       | typeof this.platform.Service.Outlet
       | typeof this.platform.Service.Lightbulb, // WithUUID<Service | typeof Service>,
-    name: string
+    name: string,
   ) {
     const serviceName = this.platform.getServiceName(serviceConstructor);
     this.log.debug(`Creating new ${serviceName} Service`);
@@ -174,7 +169,7 @@ export default abstract class HomekitDevice {
     if (foundService != null) {
       this.log.warn(
         `Removing stale Service: ${this.lsc(service, foundService)} uuid:[%s]`,
-        foundService.UUID
+        foundService.UUID,
       );
 
       this.homebridgeAccessory.removeService(foundService);
@@ -183,21 +178,21 @@ export default abstract class HomekitDevice {
 
   protected removeCharacteristicIfExists(
     service: Service,
-    characteristic: WithUUID<new () => Characteristic>
+    characteristic: WithUUID<new () => Characteristic>,
   ) {
     // testCharacteristic parameter has an incorrect type
     if (
       service.testCharacteristic(
-        characteristic as unknown as WithUUID<typeof Characteristic>
+        characteristic as unknown as WithUUID<typeof Characteristic>,
       )
     ) {
       const characteristicToRemove = service.getCharacteristic(characteristic);
       this.log.warn(
         `Removing stale Characteristic: ${this.lsc(
           service,
-          characteristicToRemove
+          characteristicToRemove,
         )} uuid:[%s]`,
-        characteristicToRemove.UUID
+        characteristicToRemove.UUID,
       );
 
       service.removeCharacteristic(characteristicToRemove);
