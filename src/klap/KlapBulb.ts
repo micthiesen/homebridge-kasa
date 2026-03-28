@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 
+import type { DeviceProtocol } from "./protocol.js";
 import type { BulbSysinfoLike, EmeterRealtime, LightStateLike } from "./types.js";
 
 interface Transport {
@@ -16,30 +17,6 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-}
-
-/**
- * Normalise an emeter realtime response.
- * Some devices return values in milli-units (current_ma, power_mw, voltage_mv, total_wh).
- */
-function normaliseEmeterRealtime(rt: Record<string, unknown>): EmeterRealtime {
-  const num = (key: string): number | undefined => {
-    const v = rt[key];
-    return typeof v === "number" ? v : undefined;
-  };
-
-  return {
-    current:
-      num("current") ??
-      (num("current_ma") != null ? num("current_ma")! / 1000 : undefined),
-    power:
-      num("power") ?? (num("power_mw") != null ? num("power_mw")! / 1000 : undefined),
-    voltage:
-      num("voltage") ??
-      (num("voltage_mv") != null ? num("voltage_mv")! / 1000 : undefined),
-    total:
-      num("total") ?? (num("total_wh") != null ? num("total_wh")! / 1000 : undefined),
-  };
 }
 
 // Color temperature ranges by model (Kelvin). Extend as needed.
@@ -72,6 +49,8 @@ export class KlapBulb extends EventEmitter {
 
   private readonly transport: Transport;
 
+  private readonly protocol: DeviceProtocol;
+
   readonly lighting: {
     setLightState: (state: Partial<LightStateLike>) => Promise<true>;
   };
@@ -86,12 +65,14 @@ export class KlapBulb extends EventEmitter {
     port: number,
     sysinfo: BulbSysinfoLike,
     transport: Transport,
+    protocol: DeviceProtocol,
   ) {
     super();
     this._host = host;
     this._port = port;
     this._sysInfo = { ...sysinfo, light_state: { ...sysinfo.light_state } };
     this.transport = transport;
+    this.protocol = protocol;
 
     // -- lighting sub-object --
     this.lighting = {
@@ -117,29 +98,9 @@ export class KlapBulb extends EventEmitter {
     this.emeter = {
       realtime: emeterRealtime,
       getRealtime: async (): Promise<unknown> => {
-        // Try SMART protocol first (get_emeter_data), then legacy IOT
-        let rt: Record<string, unknown> | undefined;
-
-        try {
-          const smartResp = (await this.transport.send({
-            method: "get_emeter_data",
-          })) as { result?: Record<string, unknown> };
-          if (smartResp?.result && Object.keys(smartResp.result).length > 0) {
-            rt = smartResp.result;
-          }
-        } catch {
-          // Not a SMART device or doesn't support emeter
-        }
-
-        if (!rt) {
-          const response = (await this.transport.send({
-            emeter: { get_realtime: {} },
-          })) as { emeter?: { get_realtime?: Record<string, unknown> } };
-          rt = response?.emeter?.get_realtime as Record<string, unknown> | undefined;
-        }
-
+        const rt = await this.protocol.fetchEmeterRealtime(this.transport);
         if (rt) {
-          Object.assign(this.emeter.realtime, normaliseEmeterRealtime(rt));
+          Object.assign(this.emeter.realtime, rt);
         }
 
         this.emit("emeter-realtime-update", this.emeter.realtime);

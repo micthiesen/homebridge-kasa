@@ -15,6 +15,7 @@ import { AesTransport } from "./AesTransport.js";
 import { KlapBulb } from "./KlapBulb.js";
 import { KlapPlug } from "./KlapPlug.js";
 import { KlapTransport } from "./KlapTransport.js";
+import { IotProtocol, isSmartDevice, SmartProtocol } from "./protocol.js";
 import type {
   BulbSysinfoLike,
   DeviceSysinfo,
@@ -533,11 +534,24 @@ export class KlapDiscovery extends EventEmitter {
     }
 
     // Create new adapter
+    const deviceProtocol = isSmartDevice(sysinfo.type) ? SmartProtocol : IotProtocol;
     let device: KlapDevice;
     if (deviceClass === "plug") {
-      device = new KlapPlug(host, port, sysinfo as PlugSysinfoLike, transport);
+      device = new KlapPlug(
+        host,
+        port,
+        sysinfo as PlugSysinfoLike,
+        transport,
+        deviceProtocol,
+      );
     } else {
-      device = new KlapBulb(host, port, sysinfo as BulbSysinfoLike, transport);
+      device = new KlapBulb(
+        host,
+        port,
+        sysinfo as BulbSysinfoLike,
+        transport,
+        deviceProtocol,
+      );
     }
 
     // Track and emit

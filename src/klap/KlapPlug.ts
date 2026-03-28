@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 
+import type { DeviceProtocol } from "./protocol.js";
 import type { EmeterRealtime, PlugSysinfoLike } from "./types.js";
 
 interface Transport {
@@ -18,64 +19,6 @@ function delay(ms: number): Promise<void> {
   });
 }
 
-/**
- * Detect if a device uses the SMART protocol (e.g. KP125M, Tapo-style)
- * vs the legacy IOT protocol (e.g. HS103, HS110).
- */
-function isSmartDevice(typeField?: string): boolean {
-  return typeField?.toUpperCase().startsWith("SMART.") === true;
-}
-
-/**
- * Translate a SMART protocol get_device_info response into the
- * PlugSysinfoLike shape expected by the HomeKit device classes.
- */
-function smartDeviceInfoToPlugSysinfo(info: Record<string, unknown>): PlugSysinfoLike {
-  // nickname is base64 encoded in SMART protocol
-  let alias = String(info.nickname ?? info.alias ?? "");
-  try {
-    if (info.nickname)
-      alias = Buffer.from(String(info.nickname), "base64").toString("utf-8");
-  } catch {
-    /* use raw value */
-  }
-
-  return {
-    deviceId: String(info.device_id ?? info.deviceId ?? ""),
-    alias,
-    model: String(info.model ?? ""),
-    mac: String(info.mac ?? "").replace(/-/g, ":"),
-    sw_ver: String(info.fw_ver ?? info.sw_ver ?? ""),
-    hw_ver: String(info.hw_ver ?? ""),
-    type: String(info.type ?? ""),
-    relay_state: info.device_on === true ? 1 : 0,
-  };
-}
-
-/**
- * Normalise an emeter realtime response.
- * Some devices return values in milli-units (current_ma, power_mw, voltage_mv, total_wh).
- */
-function normaliseEmeterRealtime(rt: Record<string, unknown>): EmeterRealtime {
-  const num = (key: string): number | undefined => {
-    const v = rt[key];
-    return typeof v === "number" ? v : undefined;
-  };
-
-  return {
-    current:
-      num("current") ??
-      (num("current_ma") != null ? num("current_ma")! / 1000 : undefined),
-    power:
-      num("power") ?? (num("power_mw") != null ? num("power_mw")! / 1000 : undefined),
-    voltage:
-      num("voltage") ??
-      (num("voltage_mv") != null ? num("voltage_mv")! / 1000 : undefined),
-    total:
-      num("total") ?? (num("total_wh") != null ? num("total_wh")! / 1000 : undefined),
-  };
-}
-
 export class KlapPlug extends EventEmitter {
   private _sysInfo: PlugSysinfoLike;
 
@@ -85,7 +28,7 @@ export class KlapPlug extends EventEmitter {
 
   private readonly transport: Transport;
 
-  private readonly _isSmart: boolean;
+  private readonly protocol: DeviceProtocol;
 
   readonly dimmer: {
     brightness: number;
@@ -102,13 +45,14 @@ export class KlapPlug extends EventEmitter {
     port: number,
     sysinfo: PlugSysinfoLike,
     transport: Transport,
+    protocol: DeviceProtocol,
   ) {
     super();
     this._host = host;
     this._port = port;
     this._sysInfo = { ...sysinfo };
     this.transport = transport;
-    this._isSmart = isSmartDevice(sysinfo.type);
+    this.protocol = protocol;
 
     // -- dimmer sub-object --
     const self = this;
@@ -130,31 +74,10 @@ export class KlapPlug extends EventEmitter {
     this.emeter = {
       realtime: emeterRealtime,
       getRealtime: async (): Promise<unknown> => {
-        if (this._isSmart) {
-          // SMART protocol: get_emeter_data returns milli-units directly
-          const response = (await this.transport.send({
-            method: "get_emeter_data",
-          })) as { result?: Record<string, unknown> };
-
-          const rt = response?.result;
-          if (rt) {
-            Object.assign(this.emeter.realtime, normaliseEmeterRealtime(rt));
-          }
-        } else {
-          // Legacy IOT protocol
-          const response = (await this.transport.send({
-            emeter: { get_realtime: {} },
-          })) as { emeter?: { get_realtime?: EmeterRealtime } };
-
-          const rt = response?.emeter?.get_realtime;
-          if (rt) {
-            Object.assign(
-              this.emeter.realtime,
-              normaliseEmeterRealtime(rt as Record<string, unknown>),
-            );
-          }
+        const rt = await this.protocol.fetchEmeterRealtime(this.transport);
+        if (rt) {
+          Object.assign(this.emeter.realtime, rt);
         }
-
         this.emit("emeter-realtime-update", this.emeter.realtime);
         return this.emeter.realtime;
       },
@@ -238,25 +161,7 @@ export class KlapPlug extends EventEmitter {
   // -- Methods --
 
   async getSysInfo(): Promise<PlugSysinfoLike> {
-    let newInfo: PlugSysinfoLike | undefined;
-
-    if (this._isSmart) {
-      // SMART protocol: get_device_info
-      const response = (await this.transport.send({
-        method: "get_device_info",
-      })) as { result?: Record<string, unknown> };
-
-      if (response?.result) {
-        newInfo = smartDeviceInfoToPlugSysinfo(response.result);
-      }
-    } else {
-      // Legacy IOT protocol
-      const response = (await this.transport.send({
-        system: { get_sysinfo: {} },
-      })) as { system?: { get_sysinfo?: PlugSysinfoLike } };
-
-      newInfo = response?.system?.get_sysinfo;
-    }
+    const newInfo = await this.protocol.fetchSysInfo(this.transport);
 
     if (newInfo) {
       const oldRelayState = this._sysInfo.relay_state;
@@ -284,16 +189,7 @@ export class KlapPlug extends EventEmitter {
   }
 
   async setPowerState(value: boolean): Promise<true> {
-    if (this._isSmart) {
-      await this.transport.send({
-        method: "set_device_info",
-        params: { device_on: value },
-      });
-    } else {
-      await this.transport.send({
-        system: { set_relay_state: { state: value ? 1 : 0 } },
-      });
-    }
+    await this.protocol.sendSetPowerState(this.transport, value);
     this._sysInfo.relay_state = value ? 1 : 0;
     return true;
   }
