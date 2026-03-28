@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.1.2](https://github.com/micthiesen/homebridge-kasa/compare/v9.1.1...v9.1.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **klap:** improve error handling, timeouts, and resilience across codebase ([e93c14c](https://github.com/micthiesen/homebridge-kasa/commit/e93c14c))
+
+### Refactoring
+
+* **klap:** switch HTTP layer to undici with connection pooling ([3f1c2a4](https://github.com/micthiesen/homebridge-kasa/commit/3f1c2a4))
+* adopt mitools utilities across codebase ([d7b09ef](https://github.com/micthiesen/homebridge-kasa/commit/d7b09ef))
+* extract shared utilities and split large functions ([d19bb54](https://github.com/micthiesen/homebridge-kasa/commit/d19bb54))
+
 ## [9.1.1](https://github.com/micthiesen/homebridge-kasa/compare/v9.1.0...v9.1.1) (2026-03-27)
 
 
