@@ -76,6 +76,7 @@ When the user says "do a release":
    - Compare URL format: `https://github.com/micthiesen/homebridge-kasa/compare/vPREV...vNEW`
 5. Commit with message: `chore: release vX.Y.Z`
 6. Tag the commit: `git tag vX.Y.Z`
+7. Push the commit and tag: `git push && git push --tags`
 
 Tag format: `v{major}.{minor}.{patch}` (e.g., `v9.1.0`)
 

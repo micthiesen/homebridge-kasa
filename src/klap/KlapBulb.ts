@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 
+import type { BulbLike } from "../util/types.js";
 import type { DeviceProtocol } from "./protocol.js";
 import type { BulbSysinfoLike, EmeterRealtime, LightStateLike } from "./types.js";
 
@@ -40,7 +41,7 @@ function getColorTempRange(model: string): { min: number; max: number } | null {
   return null;
 }
 
-export class KlapBulb extends EventEmitter {
+export class KlapBulb extends EventEmitter implements BulbLike {
   private _sysInfo: BulbSysinfoLike;
 
   private _host: string;

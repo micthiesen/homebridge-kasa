@@ -1,7 +1,7 @@
 import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge";
-import type { Bulb, BulbSysinfoLightState, LightState } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
+import type { LightStateLike } from "../klap/types.js";
 import type {
   TplinkSmarthomeAccessoryContext,
   TplinkSmarthomePlatform,
@@ -12,17 +12,18 @@ import {
   kelvinToMired,
   miredToKelvin,
 } from "../util/homekit.js";
+import type { BulbLike } from "../util/types.js";
 import { delay } from "../util/types.js";
 import { HomekitDevice } from "./HomekitDevice.js";
 
 export class HomekitDeviceBulb extends HomekitDevice {
-  private desiredLightState: LightState = {};
+  private desiredLightState: Partial<LightStateLike> = {};
 
   constructor(
     platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
     homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
-    readonly tplinkDevice: Bulb,
+    readonly tplinkDevice: BulbLike,
   ) {
     super(platform, config, homebridgeAccessory, tplinkDevice, Categories.LIGHTBULB);
 
@@ -58,7 +59,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
         return ret;
       },
       platform.config.waitTimeUpdate,
-      (value: LightState) => {
+      (value: Partial<LightStateLike>) => {
         this.desiredLightState = Object.assign(this.desiredLightState, value);
       },
     );
@@ -73,14 +74,14 @@ export class HomekitDeviceBulb extends HomekitDevice {
    *
    * @private
    */
-  private getLightState: () => Promise<LightState>;
+  private getLightState: () => Promise<LightStateLike>;
 
   /**
    * Aggregates setLightState requests
    *
    * @private
    */
-  private setLightState: (value: LightState) => Promise<true>;
+  private setLightState: (value: Partial<LightStateLike>) => Promise<true>;
 
   /**
    * Aggregates getRealtime requests
@@ -136,7 +137,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
     this.tplinkDevice.on("lightstate-sysinfo-off", () => {
       this.updateValue(lightbulbService, onCharacteristic, false);
     });
-    const onUpdateListener = (lightState: LightState | BulbSysinfoLightState) => {
+    const onUpdateListener = (lightState: LightStateLike) => {
       if (lightState.on_off != null) {
         this.updateValue(lightbulbService, onCharacteristic, lightState.on_off === 1);
       }
@@ -186,9 +187,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
         this.log.warn("setValue: Invalid Brightness:", value);
       });
 
-    const brightnessUpdateListener = (
-      lightState: LightState | BulbSysinfoLightState,
-    ) => {
+    const brightnessUpdateListener = (lightState: LightStateLike) => {
       if (lightState.brightness != null) {
         this.updateValue(
           lightbulbService,
@@ -260,9 +259,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
       });
 
     if (colorTemperatureCharacteristic != null) {
-      const colorTemperatureUpdateListener = (
-        lightState: LightState | BulbSysinfoLightState,
-      ) => {
+      const colorTemperatureUpdateListener = (lightState: LightStateLike) => {
         if (lightState.color_temp != null && lightState.color_temp > 0) {
           this.updateValue(
             lightbulbService,
@@ -326,7 +323,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
         this.log.warn("setValue: Invalid Saturation:", value);
       });
 
-    const colorUpdateListener = (lightState: LightState | BulbSysinfoLightState) => {
+    const colorUpdateListener = (lightState: LightStateLike) => {
       if (lightState.color_temp != null && lightState.color_temp > 0) {
         this.updateValue(lightbulbService, hueCharacteristic, 0);
         this.updateValue(lightbulbService, saturationCharacteristic, 0);

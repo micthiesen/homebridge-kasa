@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 
+import type { PlugLike } from "../util/types.js";
 import type { DeviceProtocol } from "./protocol.js";
 import type { EmeterRealtime, PlugSysinfoLike } from "./types.js";
 
@@ -19,7 +20,7 @@ function delay(ms: number): Promise<void> {
   });
 }
 
-export class KlapPlug extends EventEmitter {
+export class KlapPlug extends EventEmitter implements PlugLike {
   private _sysInfo: PlugSysinfoLike;
 
   private _host: string;

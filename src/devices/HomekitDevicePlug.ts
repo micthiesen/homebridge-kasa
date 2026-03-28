@@ -1,6 +1,5 @@
 import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge";
-import type { Plug, PlugSysinfo } from "tplink-smarthome-api";
 import type { TplinkSmarthomeConfig } from "../config.js";
 import type {
   TplinkSmarthomeAccessoryContext,
@@ -8,6 +7,7 @@ import type {
 } from "../TplinkSmarthomePlatform.js";
 import { deferAndCombine } from "../util/deferAndCombine.js";
 import { getOrAddCharacteristic } from "../util/homekit.js";
+import type { PlugLike } from "../util/types.js";
 import { HomekitDevice } from "./HomekitDevice.js";
 
 type ServiceType =
@@ -25,7 +25,7 @@ interface CategorySetup {
 
 function getCategorySetup(
   config: TplinkSmarthomeConfig,
-  tplinkDevice: Plug,
+  tplinkDevice: PlugLike,
   Service: TplinkSmarthomePlatform["Service"],
 ): CategorySetup {
   const isSwitchModel =
@@ -65,7 +65,7 @@ export class HomekitDevicePlug extends HomekitDevice {
     platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
     homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
-    readonly tplinkDevice: Plug,
+    readonly tplinkDevice: PlugLike,
   ) {
     const setup = getCategorySetup(config, tplinkDevice, platform.Service);
 
@@ -113,7 +113,7 @@ export class HomekitDevicePlug extends HomekitDevice {
    *
    * @private
    */
-  private getSysInfo: () => Promise<PlugSysinfo>;
+  private getSysInfo: () => Promise<unknown>;
 
   /**
    * Aggregates setPowerState requests

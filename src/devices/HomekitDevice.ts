@@ -17,7 +17,7 @@ import type {
   TplinkSmarthomePlatform,
 } from "../TplinkSmarthomePlatform.js";
 import { prefixLogger } from "../util/logger.js";
-import type { TplinkDevice } from "../util/types.js";
+import type { TplinkDeviceLike } from "../util/types.js";
 import { accessoryInformation } from "./accessoryInformation.js";
 
 export abstract class HomekitDevice {
@@ -37,7 +37,7 @@ export abstract class HomekitDevice {
     readonly platform: TplinkSmarthomePlatform,
     readonly config: TplinkSmarthomeConfig,
     homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
-    readonly tplinkDevice: TplinkDevice,
+    readonly tplinkDevice: TplinkDeviceLike,
     readonly category: Categories,
   ) {
     this.log = prefixLogger(platform.log, () => `${chalk.blue(`[${this.name}]`)}`);

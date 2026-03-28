@@ -65,7 +65,7 @@ export interface BulbSysinfoLike extends DeviceSysinfo {
 // -- Light state --
 
 export interface LightStateLike {
-  on_off: 0 | 1;
+  on_off?: 0 | 1;
   brightness?: number;
   color_temp?: number;
   hue?: number;
