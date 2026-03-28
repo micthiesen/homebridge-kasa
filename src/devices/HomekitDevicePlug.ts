@@ -10,6 +10,54 @@ import { deferAndCombine } from "../util/deferAndCombine.js";
 import { getOrAddCharacteristic } from "../util/homekit.js";
 import { HomekitDevice } from "./HomekitDevice.js";
 
+type ServiceType =
+  | typeof TplinkSmarthomePlatform.prototype.Service.Lightbulb
+  | typeof TplinkSmarthomePlatform.prototype.Service.Outlet
+  | typeof TplinkSmarthomePlatform.prototype.Service.Switch;
+
+interface CategorySetup {
+  category: Categories;
+  serviceType: ServiceType;
+  supportsBrightness: boolean;
+  staleServiceTypes: ServiceType[];
+  setupOutletInUse?: boolean;
+}
+
+function getCategorySetup(
+  config: TplinkSmarthomeConfig,
+  tplinkDevice: Plug,
+  Service: TplinkSmarthomePlatform["Service"],
+): CategorySetup {
+  const isSwitchModel =
+    config.switchModels?.findIndex((m) => tplinkDevice.model.includes(m)) !== -1;
+
+  if (isSwitchModel) {
+    return {
+      category: Categories.SWITCH,
+      serviceType: Service.Switch,
+      supportsBrightness: false,
+      staleServiceTypes: [Service.Lightbulb, Service.Outlet],
+    };
+  }
+
+  if (tplinkDevice.supportsDimmer) {
+    return {
+      category: Categories.LIGHTBULB,
+      serviceType: Service.Lightbulb,
+      supportsBrightness: true,
+      staleServiceTypes: [Service.Outlet, Service.Switch],
+    };
+  }
+
+  return {
+    category: Categories.OUTLET,
+    serviceType: Service.Outlet,
+    supportsBrightness: false,
+    staleServiceTypes: [Service.Lightbulb, Service.Switch],
+    setupOutletInUse: true,
+  };
+}
+
 export class HomekitDevicePlug extends HomekitDevice {
   private desiredPowerState?: boolean;
 
@@ -19,42 +67,11 @@ export class HomekitDevicePlug extends HomekitDevice {
     homebridgeAccessory: PlatformAccessory<TplinkSmarthomeAccessoryContext> | undefined,
     readonly tplinkDevice: Plug,
   ) {
-    super(
-      platform,
-      config,
-      homebridgeAccessory,
-      tplinkDevice,
-      ((): Categories => {
-        if (
-          config.switchModels &&
-          config.switchModels.findIndex((m) => tplinkDevice.model.includes(m)) !== -1
-        ) {
-          return Categories.SWITCH;
-        }
-        return tplinkDevice.supportsDimmer ? Categories.LIGHTBULB : Categories.OUTLET;
-      })(),
-    );
+    const setup = getCategorySetup(config, tplinkDevice, platform.Service);
 
-    let primaryService: Service;
-    if (this.category === Categories.LIGHTBULB) {
-      primaryService = this.addLightbulbService();
-      this.removeOutletService();
-      this.removeSwitchService();
-    } else if (this.category === Categories.OUTLET) {
-      primaryService = this.addOutletService();
-      this.removeBrightnessCharacteristic(primaryService);
-      this.removeLightbulbService();
-      this.removeSwitchService();
-    } else if (this.category === Categories.SWITCH) {
-      primaryService = this.addSwitchService();
-      this.removeBrightnessCharacteristic(primaryService);
-      this.removeLightbulbService();
-      this.removeOutletService();
-    } else {
-      throw new Error(
-        `constructor: Invalid category: ${this.category} (${this.category.toString()})`,
-      );
-    }
+    super(platform, config, homebridgeAccessory, tplinkDevice, setup.category);
+
+    const primaryService = this.setupPrimaryService(setup);
 
     if (platform.config.addCustomCharacteristics && tplinkDevice.supportsEmeter) {
       this.addEnergyCharacteristics(primaryService);
@@ -112,67 +129,31 @@ export class HomekitDevicePlug extends HomekitDevice {
    */
   private getRealtime: () => Promise<unknown>;
 
-  private addOutletService() {
-    const { Outlet } = this.platform.Service;
-    const { Characteristic } = this.platform;
+  private setupPrimaryService(setup: CategorySetup): Service {
+    const service =
+      this.homebridgeAccessory.getService(setup.serviceType) ??
+      this.addService(setup.serviceType, this.name);
 
-    const outletService =
-      this.homebridgeAccessory.getService(Outlet) ?? this.addService(Outlet, this.name);
-
-    this.addOnCharacteristic(outletService);
-
-    if (this.category === Categories.OUTLET) {
-      const outletInUseCharacteristic = getOrAddCharacteristic(
-        outletService,
-        Characteristic.OutletInUse,
-      );
-
-      outletInUseCharacteristic.onGet(() => {
-        this.getSysInfo().catch(this.logRejection.bind(this)); // this will eventually trigger update
-        return this.tplinkDevice.inUse; // immediately returned cached value
-      });
-
-      this.tplinkDevice.on("in-use-update", (value) => {
-        this.updateValue(outletService, outletInUseCharacteristic, value);
-      });
+    for (const staleType of setup.staleServiceTypes) {
+      this.removeServiceIfExists(staleType);
     }
 
-    return outletService;
-  }
+    this.addOnCharacteristic(service);
 
-  private removeOutletService() {
-    this.removeServiceIfExists(this.platform.Service.Outlet);
-  }
+    if (setup.supportsBrightness) {
+      this.addBrightnessCharacteristic(service);
+    } else {
+      this.removeCharacteristicIfExists(
+        service,
+        this.platform.Characteristic.Brightness,
+      );
+    }
 
-  private addSwitchService() {
-    const { Switch } = this.platform.Service;
+    if (setup.setupOutletInUse) {
+      this.addOutletInUseCharacteristic(service);
+    }
 
-    const switchService =
-      this.homebridgeAccessory.getService(Switch) ?? this.addService(Switch, this.name);
-
-    this.addOnCharacteristic(switchService);
-
-    return switchService;
-  }
-
-  private removeSwitchService() {
-    this.removeServiceIfExists(this.platform.Service.Switch);
-  }
-
-  private addLightbulbService() {
-    const { Lightbulb } = this.platform.Service;
-
-    const lightbulbService =
-      this.homebridgeAccessory.getService(Lightbulb) ??
-      this.addService(Lightbulb, this.name);
-
-    this.addOnCharacteristic(lightbulbService);
-
-    return lightbulbService;
-  }
-
-  private removeLightbulbService() {
-    this.removeServiceIfExists(this.platform.Service.Lightbulb);
+    return service;
   }
 
   private addOnCharacteristic(service: Service) {
@@ -183,8 +164,8 @@ export class HomekitDevicePlug extends HomekitDevice {
 
     onCharacteristic
       .onGet(() => {
-        this.getSysInfo().catch(this.logRejection.bind(this)); // this will eventually trigger update
-        return this.tplinkDevice.relayState; // immediately returned cached value
+        this.getSysInfo().catch(this.logRejection.bind(this));
+        return this.tplinkDevice.relayState;
       })
       .onSet(async (value) => {
         this.log.info(`Setting On to: ${value}`);
@@ -199,10 +180,24 @@ export class HomekitDevicePlug extends HomekitDevice {
     this.tplinkDevice.on("power-update", (value) => {
       this.updateValue(service, onCharacteristic, value);
     });
+  }
 
-    this.addBrightnessCharacteristic(service);
+  private addOutletInUseCharacteristic(service: Service) {
+    const { Characteristic } = this.platform;
 
-    return service;
+    const outletInUseCharacteristic = getOrAddCharacteristic(
+      service,
+      Characteristic.OutletInUse,
+    );
+
+    outletInUseCharacteristic.onGet(() => {
+      this.getSysInfo().catch(this.logRejection.bind(this));
+      return this.tplinkDevice.inUse;
+    });
+
+    this.tplinkDevice.on("in-use-update", (value) => {
+      this.updateValue(service, outletInUseCharacteristic, value);
+    });
   }
 
   private addBrightnessCharacteristic(service: Service) {
@@ -212,8 +207,8 @@ export class HomekitDevicePlug extends HomekitDevice {
     );
     brightnessCharacteristic
       .onGet(() => {
-        this.getSysInfo().catch(this.logRejection.bind(this)); // this will eventually trigger update
-        return this.tplinkDevice.dimmer.brightness; // immediately returned cached value
+        this.getSysInfo().catch(this.logRejection.bind(this));
+        return this.tplinkDevice.dimmer.brightness;
       })
       .onSet(async (value) => {
         this.log.info(`Setting Brightness to: ${value}`);
@@ -232,12 +227,6 @@ export class HomekitDevicePlug extends HomekitDevice {
     this.tplinkDevice.on("brightness-update", (value) => {
       this.updateValue(service, brightnessCharacteristic, value);
     });
-
-    return service;
-  }
-
-  private removeBrightnessCharacteristic(service: Service) {
-    this.removeCharacteristicIfExists(service, this.platform.Characteristic.Brightness);
   }
 
   private addEnergyCharacteristics(service: Service): void {

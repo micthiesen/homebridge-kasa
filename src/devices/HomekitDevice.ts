@@ -149,7 +149,8 @@ export abstract class HomekitDevice {
   addService(
     serviceConstructor:
       | typeof this.platform.Service.Outlet
-      | typeof this.platform.Service.Lightbulb, // WithUUID<Service | typeof Service>,
+      | typeof this.platform.Service.Lightbulb
+      | typeof this.platform.Service.Switch,
     name: string,
   ) {
     const serviceName = this.platform.getServiceName(serviceConstructor);
