@@ -73,14 +73,12 @@ When the user says "do a release":
 1. Review commits since the last git tag (`git log $(git describe --tags --abbrev=0)..HEAD --oneline`)
 2. Choose **patch** or **minor** version (default to patch; only minor for new features; never major unless explicitly asked)
 3. Bump `version` in `package.json`
-4. Update `CHANGELOG.md` following the existing format:
-   - Add a new section at the top (below the header) with: `## [X.Y.Z](compare-url) (YYYY-MM-DD)`
+4. Commit with message: `chore: release vX.Y.Z`
+5. Tag the commit: `git tag vX.Y.Z`
+6. Push the commit and tag: `git push && git push --tags`
+7. Create a GitHub Release: `gh release create vX.Y.Z --title "vX.Y.Z" --notes-file - <<< "notes"`
    - Group entries under `### Bug Fixes`, `### Features`, etc.
-   - Each entry: `* **scope:** description (commit-short-hash)`
-   - Compare URL format: `https://github.com/micthiesen/homebridge-kasa/compare/vPREV...vNEW`
-5. Commit with message: `chore: release vX.Y.Z`
-6. Tag the commit: `git tag vX.Y.Z`
-7. Push the commit and tag: `git push && git push --tags`
+   - Keep it concise, focused on what changed and why
 
 Tag format: `v{major}.{minor}.{patch}` (e.g., `v9.1.0`)
 
