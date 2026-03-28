@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.1.3](https://github.com/micthiesen/homebridge-kasa/compare/v9.1.2...v9.1.3) (2026-03-27)
+
+
+### Bug Fixes
+
+* **klap:** revert HTTP layer from undici to node:http (69b6f76)
+
+TP-Link's SHIP HTTP parser is case-sensitive and rejects lowercase
+`content-length` headers sent by undici, breaking KLAP/AES handshakes.
+
+* **klap:** add discovery cycle logging and handshake failure warnings (69b6f76)
+
+### Features
+
+* **scripts:** add debug REPL for local device discovery and control (69b6f76)
+
 ## [9.1.2](https://github.com/micthiesen/homebridge-kasa/compare/v9.1.1...v9.1.2) (2026-03-27)
 
 
