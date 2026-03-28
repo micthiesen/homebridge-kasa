@@ -3,7 +3,12 @@ import { sleep } from "@micthiesen/mitools/async";
 import type { BulbLike } from "../util/types.js";
 import { modelSupportsEmeter } from "./emeter.js";
 import type { DeviceProtocol } from "./protocol.js";
-import type { BulbSysinfoLike, EmeterRealtime, LightStateLike } from "./types.js";
+import type {
+  BulbSysinfoLike,
+  EmeterRealtime,
+  LightStateLike,
+  TransportType,
+} from "./types.js";
 
 interface Transport {
   send(request: object): Promise<object>;
@@ -41,6 +46,8 @@ export class KlapBulb extends EventEmitter implements BulbLike {
 
   private readonly protocol: DeviceProtocol;
 
+  readonly transportType: TransportType;
+
   readonly lighting: {
     setLightState: (state: Partial<LightStateLike>) => Promise<true>;
   };
@@ -56,6 +63,7 @@ export class KlapBulb extends EventEmitter implements BulbLike {
     sysinfo: BulbSysinfoLike,
     transport: Transport,
     protocol: DeviceProtocol,
+    transportType: TransportType,
   ) {
     super();
     this._host = host;
@@ -63,6 +71,7 @@ export class KlapBulb extends EventEmitter implements BulbLike {
     this._sysInfo = { ...sysinfo, light_state: { ...sysinfo.light_state } };
     this.transport = transport;
     this.protocol = protocol;
+    this.transportType = transportType;
 
     // -- lighting sub-object --
     this.lighting = {

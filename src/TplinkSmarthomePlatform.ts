@@ -117,7 +117,7 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
     client.on("device-new", (device: TplinkDevice) => {
       this.log.info(
-        `Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+        `[Legacy] Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
         device.deviceType,
         device.id,
         device.host,
@@ -128,7 +128,7 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
     client.on("device-online", (device: TplinkDevice) => {
       this.log.debug(
-        `Device Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+        `[Legacy] Device Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
         device.deviceType,
         device.id,
         device.host,
@@ -142,7 +142,7 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
       if (deviceAccessory !== undefined) {
         this.log.debug(
-          `Device Offline: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+          `[Legacy] Device Offline: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
           deviceAccessory.homebridgeAccessory.displayName,
           device.deviceType,
           device.id,
@@ -179,8 +179,9 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
     });
 
     klapDiscovery.on("device-new", (device: KlapPlug | KlapBulb) => {
+      const proto = device.transportType.toUpperCase();
       this.log.info(
-        `[KLAP] Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+        `[${proto}] Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
         device.deviceType,
         device.id,
         device.host,

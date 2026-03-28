@@ -544,6 +544,7 @@ export class KlapDiscovery extends EventEmitter {
         sysinfo as PlugSysinfoLike,
         transport,
         deviceProtocol,
+        protocol,
       );
     } else {
       device = new KlapBulb(
@@ -552,6 +553,7 @@ export class KlapDiscovery extends EventEmitter {
         sysinfo as BulbSysinfoLike,
         transport,
         deviceProtocol,
+        protocol,
       );
     }
 

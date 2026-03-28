@@ -3,7 +3,7 @@ import { sleep } from "@micthiesen/mitools/async";
 import type { PlugLike } from "../util/types.js";
 import { modelSupportsEmeter } from "./emeter.js";
 import type { DeviceProtocol } from "./protocol.js";
-import type { EmeterRealtime, PlugSysinfoLike } from "./types.js";
+import type { EmeterRealtime, PlugSysinfoLike, TransportType } from "./types.js";
 
 interface Transport {
   send(request: object): Promise<object>;
@@ -19,6 +19,8 @@ export class KlapPlug extends EventEmitter implements PlugLike {
   private readonly transport: Transport;
 
   private readonly protocol: DeviceProtocol;
+
+  readonly transportType: TransportType;
 
   readonly dimmer: {
     brightness: number;
@@ -36,6 +38,7 @@ export class KlapPlug extends EventEmitter implements PlugLike {
     sysinfo: PlugSysinfoLike,
     transport: Transport,
     protocol: DeviceProtocol,
+    transportType: TransportType,
   ) {
     super();
     this._host = host;
@@ -43,6 +46,7 @@ export class KlapPlug extends EventEmitter implements PlugLike {
     this._sysInfo = { ...sysinfo };
     this.transport = transport;
     this.protocol = protocol;
+    this.transportType = transportType;
 
     // -- dimmer sub-object --
     const self = this;
