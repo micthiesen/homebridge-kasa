@@ -10,7 +10,8 @@ const agent = new Agent({
 });
 
 export function closeHttpAgent(): void {
-  agent.close();
+  if (agent.closed || agent.destroyed) return;
+  agent.close(() => {});
 }
 
 export type HttpHeaders = Record<string, string | string[] | undefined>;
