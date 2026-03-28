@@ -43,7 +43,8 @@
     "start": "homebridge --plugin-path .",
     "pretest": "pnpm run lint && pnpm run typecheck",
     "test": "pnpm run test:only",
-    "test:only": "vitest run"
+    "test:only": "vitest run",
+    "debug:script": "node --env-file=.env --import tsx/esm src/scripts/debug.ts"
   },
   "dependencies": {
     "@micthiesen/mitools": "^2",
@@ -51,8 +52,7 @@
     "ajv-formats": "^3.0.1",
     "chalk": "^5.4.1",
     "semver": "^7.7.4",
-    "tplink-smarthome-api": "~5.0.0",
-    "undici": "^7.24.6"
+    "tplink-smarthome-api": "~5.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.8",
@@ -60,6 +60,7 @@
     "@types/semver": "^7.7.1",
     "hap-nodejs": "~0.14.2",
     "homebridge": "~1.11.3",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vitest": "^4.1.1"
   },

@@ -1,18 +1,4 @@
-import { Agent, request } from "undici";
-
-const CONNECT_TIMEOUT_MS = 3_000;
-
-const agent = new Agent({
-  connect: { timeout: CONNECT_TIMEOUT_MS },
-  keepAliveTimeout: 30_000,
-  keepAliveMaxTimeout: 60_000,
-  pipelining: 1,
-});
-
-export function closeHttpAgent(): void {
-  if (agent.closed || agent.destroyed) return;
-  agent.close(() => {});
-}
+import * as http from "node:http";
 
 export type HttpHeaders = Record<string, string | string[] | undefined>;
 
@@ -23,57 +9,55 @@ export interface HttpResponse {
 }
 
 /**
- * Derive granular timeouts from an overall timeout budget.
+ * HTTP POST using Node's built-in http module.
  *
- * - headersTimeout: 60% of overall (time to receive response headers after request sent)
- * - bodyTimeout: 80% of overall (max time between body data chunks)
- *
- * The overall timeout is still enforced as a hard deadline via AbortSignal.
+ * Each request creates a fresh TCP connection (no keep-alive pooling).
+ * TP-Link's SHIP HTTP parser is case-sensitive and rejects requests
+ * with lowercase `content-length` (as sent by undici), so we use
+ * node:http which sends standard-cased headers.
  */
-function deriveTimeouts(overallMs: number) {
-  return {
-    headersTimeout: Math.round(overallMs * 0.6),
-    bodyTimeout: Math.round(overallMs * 0.8),
-  };
-}
-
-/**
- * HTTP POST using undici with connection pooling and granular timeouts.
- *
- * Connections to the same origin are reused via keep-alive. Connect timeout
- * is fixed at 3s (suitable for local network IoT devices). Per-request
- * headers and body timeouts are derived from the caller's overall timeout.
- */
-export async function httpPost(
+export function httpPost(
   url: string,
   body: Buffer | string,
   headers: Record<string, string>,
   timeoutMs: number,
 ): Promise<HttpResponse> {
-  const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
-  const { headersTimeout, bodyTimeout } = deriveTimeouts(timeoutMs);
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
 
-  const resp = await request(url, {
-    method: "POST",
-    headers: {
-      ...headers,
-      "Content-Length": String(reqBody.length),
-    },
-    body: reqBody,
-    dispatcher: agent,
-    headersTimeout,
-    bodyTimeout,
-    signal: AbortSignal.timeout(timeoutMs),
+    const req = http.request(
+      {
+        hostname: parsed.hostname,
+        port: parsed.port || 80,
+        path: parsed.pathname + parsed.search,
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Length": String(reqBody.length),
+        },
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode ?? 0,
+            headers: res.headers as HttpHeaders,
+            body: Buffer.concat(chunks),
+          });
+        });
+        res.on("error", reject);
+      },
+    );
+
+    req.on("error", reject);
+    req.on("timeout", () => {
+      req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms`));
+    });
+
+    req.write(reqBody);
+    req.end();
   });
-
-  const chunks: Buffer[] = [];
-  for await (const chunk of resp.body) {
-    chunks.push(Buffer.from(chunk));
-  }
-
-  return {
-    statusCode: resp.statusCode,
-    headers: resp.headers as HttpHeaders,
-    body: Buffer.concat(chunks),
-  };
 }

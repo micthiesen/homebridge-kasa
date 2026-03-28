@@ -20,7 +20,6 @@ import type { TplinkSmarthomeConfig } from "./config.js";
 import { parseConfig } from "./config.js";
 import { createHomekitDevice } from "./devices/createHomekitDevice.js";
 import type { HomekitDevice } from "./devices/HomekitDevice.js";
-import { closeHttpAgent } from "./klap/http.js";
 import type { KlapBulb } from "./klap/KlapBulb.js";
 import { KlapDiscovery } from "./klap/KlapDiscovery.js";
 import type { KlapPlug } from "./klap/KlapPlug.js";
@@ -215,6 +214,14 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       }
     });
 
+    klapDiscovery.on("warning", (msg: string) => {
+      this.log.warn("[KLAP] %s", msg);
+    });
+
+    klapDiscovery.on("debug", (msg: string) => {
+      this.log.debug("[KLAP] %s", msg);
+    });
+
     klapDiscovery.on("error", (err: Error) => {
       this.log.error("[KLAP] Discovery error: %s", err.message);
       this.log.debug("[KLAP] %O", err);
@@ -253,7 +260,6 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       if (this.klapDiscovery) {
         this.klapDiscovery.stop();
       }
-      closeHttpAgent();
     });
   }
 

@@ -129,6 +129,7 @@ async function detectProtocol(
     if (resp.statusCode === 200) {
       return "klap";
     }
+    debug?.(`${host}: KLAP probe returned status ${resp.statusCode}`);
   } catch (err) {
     debug?.(
       `${host}: KLAP probe failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -149,6 +150,7 @@ async function detectProtocol(
         // AES devices respond with error_code (even if non-zero, it means the
         // endpoint exists and speaks the AES protocol)
         if (result.error_code !== undefined) {
+          debug?.(`${host}: detected AES protocol (error_code=${result.error_code})`);
           return "aes";
         }
       } catch (err) {
@@ -290,15 +292,39 @@ export class KlapDiscovery extends EventEmitter {
       // 2. Build candidate list
       const candidates = await this.buildCandidateList();
 
+      if (candidates.length === 0) {
+        this.emit(
+          "debug",
+          "Discovery cycle: no new candidates to probe " +
+            `(${this.knownDevices.size} known devices)`,
+        );
+      } else {
+        this.emit("debug", `Discovery cycle: probing ${candidates.length} candidates`);
+      }
+
       // 3. Probe each candidate (with concurrency limit and per-probe timeout)
       const CONCURRENCY = 10;
       const PROBE_TIMEOUT = this.timeout * 4;
+      let probed = 0;
+      let found = 0;
+      const prevSize = this.knownDevices.size;
+
       for (let i = 0; i < candidates.length; i += CONCURRENCY) {
         const batch = candidates.slice(i, i + CONCURRENCY);
         await Promise.allSettled(
           batch.map((c) =>
             withTimeout(this.probeCandidate(c.host, c.port), PROBE_TIMEOUT),
           ),
+        );
+        probed += batch.length;
+      }
+
+      found = this.knownDevices.size - prevSize;
+      if (candidates.length > 0) {
+        this.emit(
+          "debug",
+          `Discovery cycle complete: probed ${probed} candidates, ` +
+            `${found} new devices (${this.knownDevices.size} total)`,
         );
       }
     } catch (err) {
@@ -416,6 +442,10 @@ export class KlapDiscovery extends EventEmitter {
 
     const sysinfo = await this.fetchSysinfo(transport);
     if (!sysinfo) {
+      this.emit(
+        "debug",
+        `${host}: ${protocol} handshake succeeded but sysinfo fetch failed, closing`,
+      );
       transport.close();
       return;
     }
@@ -457,7 +487,11 @@ export class KlapDiscovery extends EventEmitter {
 
     try {
       await transport.handshake();
-    } catch {
+    } catch (err) {
+      this.emit(
+        "warning",
+        `${host}: ${protocol} handshake failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
       transport.close();
       return null;
     }
