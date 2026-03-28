@@ -159,7 +159,12 @@ export abstract class HomekitDevice {
   }
 
   protected logRejection(reason: unknown): void {
-    this.log.error(JSON.stringify(reason));
+    if (reason instanceof Error) {
+      this.log.error(reason.message);
+      if (reason.stack) this.log.debug(reason.stack);
+    } else {
+      this.log.error(String(reason));
+    }
   }
 
   protected removeServiceIfExists(service: WithUUID<typeof Service>) {

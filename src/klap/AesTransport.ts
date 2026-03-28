@@ -1,4 +1,4 @@
-import { withRetry } from "@micthiesen/mitools/async";
+import { withRetry, withTimeout } from "@micthiesen/mitools/async";
 import {
   aesDecrypt,
   aesEncrypt,
@@ -182,72 +182,75 @@ export class AesTransport {
    * the response. Re-handshakes on auth errors (once).
    */
   async send(request: object): Promise<object> {
-    return await withRetry(
-      async () => {
-        if (!this.session || Date.now() >= this.session.expiry) {
-          await this.handshake();
-        }
+    return await withTimeout(
+      withRetry(
+        async () => {
+          if (!this.session || Date.now() >= this.session.expiry) {
+            await this.handshake();
+          }
 
-        const session = this.session!;
+          const session = this.session!;
 
-        const payload = JSON.stringify(request);
-        const encrypted = aesEncrypt(payload, session.key, session.iv);
+          const payload = JSON.stringify(request);
+          const encrypted = aesEncrypt(payload, session.key, session.iv);
 
-        const body = JSON.stringify({
-          method: "securePassthrough",
-          params: { request: encrypted },
-        });
+          const body = JSON.stringify({
+            method: "securePassthrough",
+            params: { request: encrypted },
+          });
 
-        const resp = await httpPost(
-          `${this.baseUrl}/app?token=${session.token}`,
-          body,
-          {
-            ...AES_COMMON_HEADERS,
-            Cookie: session.cookie,
-          },
-          this.timeout,
-        );
-
-        if (resp.statusCode !== 200) {
-          throw new Error(
-            `AES request failed: ${this.host} responded with status ${resp.statusCode}`,
+          const resp = await httpPost(
+            `${this.baseUrl}/app?token=${session.token}`,
+            body,
+            {
+              ...AES_COMMON_HEADERS,
+              Cookie: session.cookie,
+            },
+            this.timeout,
           );
-        }
 
-        const result = JSON.parse(resp.body.toString("utf-8"));
-
-        // Check for authentication errors in the outer response
-        if (result.error_code !== 0) {
-          const code = result.error_code;
-          // -1501 (invalid request), -1002 (incorrect request), -1003 (JSON format error)
-          // are auth/session errors that warrant re-handshake
-          if (code === -1501 || code === -1002 || code === -1003) {
-            throw new AuthError(
-              `AES request auth error from ${this.host}: error_code=${code}`,
+          if (resp.statusCode !== 200) {
+            throw new Error(
+              `AES request failed: ${this.host} responded with status ${resp.statusCode}`,
             );
           }
-          throw new Error(`AES request error from ${this.host}: error_code=${code}`);
-        }
 
-        // Decrypt the inner response
-        const decryptedResp = aesDecrypt(
-          result.result.response,
-          session.key,
-          session.iv,
-        );
-        return JSON.parse(decryptedResp);
-      },
-      {
-        maxAttempts: 2,
-        baseDelayMs: 0,
-        shouldRetry: (err) => {
-          if (err instanceof AuthError) {
-            this.session = null;
-            return true;
+          const result = JSON.parse(resp.body.toString("utf-8"));
+
+          // Check for authentication errors in the outer response
+          if (result.error_code !== 0) {
+            const code = result.error_code;
+            // -1501 (invalid request), -1002 (incorrect request), -1003 (JSON format error)
+            // are auth/session errors that warrant re-handshake
+            if (code === -1501 || code === -1002 || code === -1003) {
+              throw new AuthError(
+                `AES request auth error from ${this.host}: error_code=${code}`,
+              );
+            }
+            throw new Error(`AES request error from ${this.host}: error_code=${code}`);
           }
-          return false;
+
+          // Decrypt the inner response
+          const decryptedResp = aesDecrypt(
+            result.result.response,
+            session.key,
+            session.iv,
+          );
+          return JSON.parse(decryptedResp);
         },
-      },
+        {
+          maxAttempts: 2,
+          baseDelayMs: 0,
+          shouldRetry: (err) => {
+            if (err instanceof AuthError) {
+              this.session = null;
+              return true;
+            }
+            return false;
+          },
+        },
+      ),
+      this.timeout * 6,
     );
   }
 

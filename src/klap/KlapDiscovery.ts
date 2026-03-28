@@ -36,6 +36,7 @@ interface DeviceRecord {
   transport: KlapTransport | AesTransport;
   protocol: TransportType;
   online: boolean;
+  failCount: number;
 }
 
 interface DiscoveryOptions {
@@ -114,6 +115,7 @@ async function detectProtocol(
   host: string,
   port: number,
   timeoutMs: number,
+  debug?: (msg: string) => void,
 ): Promise<TransportType | null> {
   // Try KLAP handshake1 first (POST /app/handshake1 with 16 random bytes)
   try {
@@ -127,8 +129,10 @@ async function detectProtocol(
     if (resp.statusCode === 200) {
       return "klap";
     }
-  } catch {
-    // Connection failed or timed out, try AES next
+  } catch (err) {
+    debug?.(
+      `${host}: KLAP probe failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   // Try AES handshake (POST /app with JSON handshake)
@@ -147,12 +151,16 @@ async function detectProtocol(
         if (result.error_code !== undefined) {
           return "aes";
         }
-      } catch {
-        // Not JSON, not an AES device
+      } catch (err) {
+        debug?.(
+          `${host}: AES JSON parse failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-  } catch {
-    // Connection failed or timed out
+  } catch (err) {
+    debug?.(
+      `${host}: AES probe failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   return null;
@@ -180,7 +188,7 @@ function smartInfoToSysinfo(info: Record<string, unknown>): DeviceSysinfo {
     if (info.nickname)
       alias = Buffer.from(String(info.nickname), "base64").toString("utf-8");
   } catch {
-    /* use raw value */
+    /* base64 decode failed, use raw nickname value */
   }
 
   return {
@@ -309,12 +317,19 @@ export class KlapDiscovery extends EventEmitter {
       async ([_id, record]) => {
         try {
           await record.device.getSysInfo();
+          record.failCount = 0;
           if (!record.online) {
             record.online = true;
             this.emit("device-online", record.device);
           }
-        } catch {
-          if (record.online) {
+        } catch (err) {
+          record.failCount += 1;
+          this.emit(
+            "debug",
+            `getSysInfo failed for ${record.device.host} ` +
+              `(failCount: ${record.failCount}): ${err}`,
+          );
+          if (record.online && record.failCount >= 3) {
             record.online = false;
             this.emit("device-offline", record.device);
           }
@@ -420,7 +435,9 @@ export class KlapDiscovery extends EventEmitter {
     transport: KlapTransport | AesTransport;
     protocol: TransportType;
   } | null> {
-    const protocol = await detectProtocol(host, port, this.timeout);
+    const protocol = await detectProtocol(host, port, this.timeout, (msg) =>
+      this.emit("debug", msg),
+    );
     if (protocol == null) return null;
 
     const transport =
@@ -512,6 +529,7 @@ export class KlapDiscovery extends EventEmitter {
       existingRecord.device.host = host;
       existingRecord.device.port = port;
       existingRecord.online = true;
+      existingRecord.failCount = 0;
       this.emit("device-online", existingRecord.device);
       return;
     }
@@ -542,6 +560,7 @@ export class KlapDiscovery extends EventEmitter {
       transport,
       protocol,
       online: true,
+      failCount: 0,
     });
 
     this.emit("device-new", device);

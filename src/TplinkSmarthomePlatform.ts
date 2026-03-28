@@ -256,7 +256,7 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       for (const accForHost of deviceAccessories.values()) {
         promises.push(this.refreshEmeterForAccessories(accForHost));
       }
-      await Promise.all(promises);
+      await Promise.allSettled(promises);
     } catch (err) {
       this.log.error(`Error in ${chalk.magenta("refreshEmeter()")}:`);
       this.log.error(String(err));
@@ -266,7 +266,9 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
         this.config.emeterPollingInterval,
       );
       setTimeout(() => {
-        this.refreshEmeter();
+        this.refreshEmeter().catch((err) => {
+          this.log.error("Unexpected error in refreshEmeter: %s", String(err));
+        });
       }, this.config.emeterPollingInterval);
     }
   }

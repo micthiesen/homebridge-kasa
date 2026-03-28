@@ -30,7 +30,7 @@ function smartDeviceInfoToPlugSysinfo(info: Record<string, unknown>): PlugSysinf
     if (info.nickname)
       alias = Buffer.from(String(info.nickname), "base64").toString("utf-8");
   } catch {
-    /* use raw value */
+    /* base64 decode failed, use raw nickname value */
   }
 
   return {
