@@ -62,6 +62,11 @@ Both emit discovered devices to `foundDevice()`, which creates/restores HomeKit 
 - Event-driven: devices emit `power-update`, `lightstate-update`, `emeter-realtime-update` events consumed by HomeKit device classes
 - `deferAndCombine` utility (`src/utils.ts`): batches rapid characteristic updates into single device commands
 
+## Workflow
+
+- Always work directly on `main` by default
+- Prefer not to use worktrees unless isolation is necessary; always clean them up after
+
 ## Releases
 
 When the user says "do a release":
