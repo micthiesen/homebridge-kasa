@@ -16,7 +16,6 @@ pnpm run format        # Biome format
 pnpm run typecheck     # Type check without emitting
 pnpm run test          # Full check: lint + typecheck + vitest
 pnpm run test:only     # Vitest only
-pnpm run spellcheck    # cspell
 ```
 
 Run a single test file:
