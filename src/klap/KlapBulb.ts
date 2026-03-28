@@ -1,23 +1,12 @@
 import { EventEmitter } from "node:events";
-
 import type { BulbLike } from "../util/types.js";
+import { delay } from "../util/types.js";
+import { modelSupportsEmeter } from "./emeter.js";
 import type { DeviceProtocol } from "./protocol.js";
 import type { BulbSysinfoLike, EmeterRealtime, LightStateLike } from "./types.js";
 
 interface Transport {
   send(request: object): Promise<object>;
-}
-
-const EMETER_MODELS = ["HS110", "HS300", "KP115", "KP125", "EP25"];
-
-function modelSupportsEmeter(model: string): boolean {
-  return EMETER_MODELS.some((m) => model.toUpperCase().includes(m));
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 // Color temperature ranges by model (Kelvin). Extend as needed.

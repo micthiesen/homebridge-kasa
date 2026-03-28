@@ -8,10 +8,10 @@
 
 import * as crypto from "node:crypto";
 import { EventEmitter } from "node:events";
-import * as http from "node:http";
 import * as net from "node:net";
 
 import { AesTransport } from "./AesTransport.js";
+import { httpPost } from "./http.js";
 import { KlapBulb } from "./KlapBulb.js";
 import { KlapPlug } from "./KlapPlug.js";
 import { KlapTransport } from "./KlapTransport.js";
@@ -86,54 +86,6 @@ function isPortOpen(host: string, port: number, timeoutMs: number): Promise<bool
     });
 
     socket.connect(port, host);
-  });
-}
-
-/**
- * Simple HTTP POST using Node's built-in http module.
- */
-function httpPost(
-  url: string,
-  body: Buffer | string,
-  headers: Record<string, string>,
-  timeoutMs: number,
-): Promise<{ statusCode: number; body: Buffer }> {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
-    const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
-
-    const req = http.request(
-      {
-        hostname: parsed.hostname,
-        port: parsed.port || 80,
-        path: parsed.pathname + parsed.search,
-        method: "POST",
-        headers: {
-          ...headers,
-          "Content-Length": String(reqBody.length),
-        },
-        timeout: timeoutMs,
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (chunk: Buffer) => chunks.push(chunk));
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode ?? 0,
-            body: Buffer.concat(chunks),
-          });
-        });
-        res.on("error", reject);
-      },
-    );
-
-    req.on("error", reject);
-    req.on("timeout", () => {
-      req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms`));
-    });
-
-    req.write(reqBody);
-    req.end();
   });
 }
 
@@ -436,76 +388,108 @@ export class KlapDiscovery extends EventEmitter {
       }
     }
 
-    // Detect protocol
-    const protocol = await detectProtocol(host, port, this.timeout);
-    if (protocol == null) return;
+    const result = await this.establishTransport(host, port);
+    if (result == null) return;
 
-    // Create transport
-    let transport: KlapTransport | AesTransport;
-    if (protocol === "klap") {
-      transport = new KlapTransport({
-        host,
-        port,
-        credentials: this.credentials,
-        timeout: this.timeout,
-      });
-    } else {
-      transport = new AesTransport({
-        host,
-        port,
-        credentials: this.credentials,
-        timeout: this.timeout,
-      });
-    }
+    const { transport, protocol } = result;
 
-    // Complete handshake
-    try {
-      await transport.handshake();
-    } catch {
+    const sysinfo = await this.fetchSysinfo(transport);
+    if (!sysinfo) {
       transport.close();
       return;
     }
 
-    // Fetch sysinfo (try legacy IOT first, then SMART protocol)
-    let sysinfo: DeviceSysinfo | undefined;
+    this.registerDevice(host, port, transport, protocol, sysinfo);
+  }
+
+  /**
+   * Detect which protocol the device speaks, create the appropriate
+   * transport, and complete the handshake. Returns null if the device
+   * does not respond to either protocol.
+   */
+  private async establishTransport(
+    host: string,
+    port: number,
+  ): Promise<{
+    transport: KlapTransport | AesTransport;
+    protocol: TransportType;
+  } | null> {
+    const protocol = await detectProtocol(host, port, this.timeout);
+    if (protocol == null) return null;
+
+    const transport =
+      protocol === "klap"
+        ? new KlapTransport({
+            host,
+            port,
+            credentials: this.credentials,
+            timeout: this.timeout,
+          })
+        : new AesTransport({
+            host,
+            port,
+            credentials: this.credentials,
+            timeout: this.timeout,
+          });
+
     try {
-      // Try legacy IOT: system.get_sysinfo
+      await transport.handshake();
+    } catch {
+      transport.close();
+      return null;
+    }
+
+    return { transport, protocol };
+  }
+
+  /**
+   * Fetch device sysinfo by trying the legacy IOT protocol first,
+   * then falling back to the SMART protocol.
+   */
+  private async fetchSysinfo(
+    transport: KlapTransport | AesTransport,
+  ): Promise<DeviceSysinfo | undefined> {
+    // Try legacy IOT: system.get_sysinfo
+    try {
       const response = (await transport.send({
         system: { get_sysinfo: {} },
       })) as { system?: { get_sysinfo?: DeviceSysinfo } };
 
       const info = response?.system?.get_sysinfo;
       if (info?.deviceId) {
-        sysinfo = info;
+        return info;
       }
     } catch {
       // Legacy command failed, will try SMART below
     }
 
-    if (!sysinfo) {
-      try {
-        // Try SMART protocol: get_device_info
-        const response = (await transport.send({
-          method: "get_device_info",
-        })) as { result?: Record<string, unknown> };
+    // Try SMART protocol: get_device_info
+    try {
+      const response = (await transport.send({
+        method: "get_device_info",
+      })) as { result?: Record<string, unknown> };
 
-        if (
-          response?.result &&
-          (response.result.device_id || response.result.deviceId)
-        ) {
-          sysinfo = smartInfoToSysinfo(response.result);
-        }
-      } catch {
-        // Neither protocol worked
+      if (response?.result && (response.result.device_id || response.result.deviceId)) {
+        return smartInfoToSysinfo(response.result);
       }
+    } catch {
+      // Neither protocol worked
     }
 
-    if (!sysinfo) {
-      transport.close();
-      return;
-    }
+    return undefined;
+  }
 
-    // Classify device type
+  /**
+   * Classify the device, then either update an existing record or create
+   * a new adapter and emit discovery events.
+   */
+  private registerDevice(
+    host: string,
+    port: number,
+    transport: KlapTransport | AesTransport,
+    protocol: TransportType,
+    sysinfo: DeviceSysinfo,
+  ): void {
     const deviceClass = classifyDevice(sysinfo);
     if (deviceClass == null) {
       this.emit(
@@ -522,7 +506,6 @@ export class KlapDiscovery extends EventEmitter {
     // Check if this device was previously known (by device ID)
     const existingRecord = this.knownDevices.get(sysinfo.deviceId);
     if (existingRecord != null) {
-      // Device was previously known, close old transport and update
       existingRecord.transport.close();
       existingRecord.transport = transport;
       existingRecord.protocol = protocol;
@@ -554,7 +537,6 @@ export class KlapDiscovery extends EventEmitter {
       );
     }
 
-    // Track and emit
     this.knownDevices.set(sysinfo.deviceId, {
       device,
       transport,

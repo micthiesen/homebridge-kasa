@@ -49,6 +49,10 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
   private readonly categories: Map<Categories, string> = new Map();
 
+  private readonly legacyClient: Client;
+
+  private readonly klapDiscovery: KlapDiscovery | undefined;
+
   constructor(
     public readonly log: Logging,
     config: PlatformConfig,
@@ -90,6 +94,12 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
     this.categories.set(Categories.OUTLET, "OUTLET");
     this.categories.set(Categories.SWITCH, "SWITCH");
 
+    this.legacyClient = this.setupLegacyDiscovery();
+    this.klapDiscovery = this.setupKlapDiscovery();
+    this.setupLifecycleHandlers();
+  }
+
+  private setupLegacyDiscovery(): Client {
     const tplinkApiLogger: Logging = Object.assign(() => {}, this.log, {
       prefix: `${this.log.prefix || PLATFORM_NAME}.API`,
     });
@@ -136,74 +146,81 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       }
     });
 
+    return client;
+  }
+
+  private setupKlapDiscovery(): KlapDiscovery | undefined {
     // KLAP/AES discovery for newer devices (port 80)
     // Only enabled when Kasa credentials are configured
-    let klapDiscovery: KlapDiscovery | undefined;
-
-    if (this.config.kasaCredentials) {
-      this.log.info(
-        "Kasa credentials configured, enabling KLAP/AES discovery for newer devices",
-      );
-
-      klapDiscovery = new KlapDiscovery({
-        credentials: this.config.kasaCredentials,
-        devices: this.config.discoveryOptions.devices,
-        broadcast: this.config.discoveryOptions.broadcast,
-        discoveryInterval: this.config.discoveryOptions.discoveryInterval,
-        timeout: this.config.defaultSendOptions.timeout,
-      });
-
-      klapDiscovery.on("device-new", (device: KlapPlug | KlapBulb) => {
-        this.log.info(
-          `[KLAP] Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
-          device.deviceType,
-          device.id,
-          device.host,
-          device.port,
-        );
-        this.foundDevice(device);
-      });
-
-      klapDiscovery.on("device-online", (device: KlapPlug | KlapBulb) => {
-        this.log.debug(
-          `[KLAP] Device Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
-          device.deviceType,
-          device.id,
-          device.host,
-          device.port,
-        );
-        this.foundDevice(device);
-      });
-
-      klapDiscovery.on("device-offline", (device: KlapPlug | KlapBulb) => {
-        const deviceAccessory = this.homekitDevicesById.get(device.id);
-        if (deviceAccessory !== undefined) {
-          this.log.debug(
-            `[KLAP] Device Offline: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
-            deviceAccessory.homebridgeAccessory.displayName,
-            device.deviceType,
-            device.id,
-            device.host,
-            device.port,
-          );
-        }
-      });
-
-      klapDiscovery.on("error", (err: Error) => {
-        this.log.error("[KLAP] Discovery error: %s", err.message);
-        this.log.debug("[KLAP] %O", err);
-      });
-    } else {
+    if (!this.config.kasaCredentials) {
       this.log.info(
         "No Kasa credentials configured. Newer devices using KLAP/AES protocol will not be discovered. " +
           "Set kasaUsername and kasaPassword in config to enable.",
       );
+      return undefined;
     }
 
+    this.log.info(
+      "Kasa credentials configured, enabling KLAP/AES discovery for newer devices",
+    );
+
+    const klapDiscovery = new KlapDiscovery({
+      credentials: this.config.kasaCredentials,
+      devices: this.config.discoveryOptions.devices,
+      broadcast: this.config.discoveryOptions.broadcast,
+      discoveryInterval: this.config.discoveryOptions.discoveryInterval,
+      timeout: this.config.defaultSendOptions.timeout,
+    });
+
+    klapDiscovery.on("device-new", (device: KlapPlug | KlapBulb) => {
+      this.log.info(
+        `[KLAP] Device First Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+        device.deviceType,
+        device.id,
+        device.host,
+        device.port,
+      );
+      this.foundDevice(device);
+    });
+
+    klapDiscovery.on("device-online", (device: KlapPlug | KlapBulb) => {
+      this.log.debug(
+        `[KLAP] Device Online: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+        device.deviceType,
+        device.id,
+        device.host,
+        device.port,
+      );
+      this.foundDevice(device);
+    });
+
+    klapDiscovery.on("device-offline", (device: KlapPlug | KlapBulb) => {
+      const deviceAccessory = this.homekitDevicesById.get(device.id);
+      if (deviceAccessory !== undefined) {
+        this.log.debug(
+          `[KLAP] Device Offline: ${chalk.blue(`[${device.alias}]`)} %s [%s]`,
+          deviceAccessory.homebridgeAccessory.displayName,
+          device.deviceType,
+          device.id,
+          device.host,
+          device.port,
+        );
+      }
+    });
+
+    klapDiscovery.on("error", (err: Error) => {
+      this.log.error("[KLAP] Discovery error: %s", err.message);
+      this.log.debug("[KLAP] %O", err);
+    });
+
+    return klapDiscovery;
+  }
+
+  private setupLifecycleHandlers(): void {
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       this.log.debug(APIEvent.DID_FINISH_LAUNCHING);
 
-      client.startDiscovery({
+      this.legacyClient.startDiscovery({
         ...this.config.discoveryOptions,
         filterCallback: (si: Sysinfo) => {
           return si.deviceId != null && si.deviceId.length > 0;
@@ -211,59 +228,61 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       });
 
       // Start KLAP/AES discovery alongside legacy (if credentials configured)
-      if (klapDiscovery) {
-        klapDiscovery.start();
+      if (this.klapDiscovery) {
+        this.klapDiscovery.start();
       }
 
-      const refreshEmeterForAccessories = async (accessories: HomekitDevice[]) => {
-        for (const acc of accessories) {
-          const device = acc.tplinkDevice;
-          if (device.supportsEmeter) {
-            this.log.debug(`getEmeterRealtime ${chalk.blue(`[${device.alias}]`)}`);
-            await device.emeter.getRealtime().catch((reason) => {
-              this.log.error("[%s] %s", device.alias, "emeter.getRealtime()");
-              this.log.error(reason);
-            });
-          }
-        }
-      };
-
-      const refreshEmeter = async () => {
-        this.log.debug(`${chalk.magenta("refreshEmeter()")}`);
-        if (this.config.emeterPollingInterval <= 0) return;
-
-        try {
-          const deviceAccessories = this.deviceAccessoriesByHost;
-          const promises: Promise<unknown>[] = [];
-
-          for (const accForHost of deviceAccessories.values()) {
-            promises.push(refreshEmeterForAccessories(accForHost));
-          }
-          await Promise.all(promises);
-        } catch (err) {
-          this.log.error(`Error in ${chalk.magenta("refreshEmeter()")}:`);
-          this.log.error(String(err));
-        } finally {
-          this.log.debug(
-            `Scheduling next run of ${chalk.magenta("refreshEmeter()")} in %d(ms)`,
-            this.config.emeterPollingInterval,
-          );
-          setTimeout(() => {
-            refreshEmeter();
-          }, this.config.emeterPollingInterval);
-        }
-      };
-
-      if (this.config.emeterPollingInterval > 0) refreshEmeter();
+      if (this.config.emeterPollingInterval > 0) this.refreshEmeter();
     });
 
     this.api.on("shutdown", () => {
       this.log.debug("shutdown");
-      client.stopDiscovery();
-      if (klapDiscovery) {
-        klapDiscovery.stop();
+      this.legacyClient.stopDiscovery();
+      if (this.klapDiscovery) {
+        this.klapDiscovery.stop();
       }
     });
+  }
+
+  private async refreshEmeter(): Promise<void> {
+    this.log.debug(`${chalk.magenta("refreshEmeter()")}`);
+    if (this.config.emeterPollingInterval <= 0) return;
+
+    try {
+      const deviceAccessories = this.deviceAccessoriesByHost;
+      const promises: Promise<unknown>[] = [];
+
+      for (const accForHost of deviceAccessories.values()) {
+        promises.push(this.refreshEmeterForAccessories(accForHost));
+      }
+      await Promise.all(promises);
+    } catch (err) {
+      this.log.error(`Error in ${chalk.magenta("refreshEmeter()")}:`);
+      this.log.error(String(err));
+    } finally {
+      this.log.debug(
+        `Scheduling next run of ${chalk.magenta("refreshEmeter()")} in %d(ms)`,
+        this.config.emeterPollingInterval,
+      );
+      setTimeout(() => {
+        this.refreshEmeter();
+      }, this.config.emeterPollingInterval);
+    }
+  }
+
+  private async refreshEmeterForAccessories(
+    accessories: HomekitDevice[],
+  ): Promise<void> {
+    for (const acc of accessories) {
+      const device = acc.tplinkDevice;
+      if (device.supportsEmeter) {
+        this.log.debug(`getEmeterRealtime ${chalk.blue(`[${device.alias}]`)}`);
+        await device.emeter.getRealtime().catch((reason) => {
+          this.log.error("[%s] %s", device.alias, "emeter.getRealtime()");
+          this.log.error(reason);
+        });
+      }
+    }
   }
 
   /**

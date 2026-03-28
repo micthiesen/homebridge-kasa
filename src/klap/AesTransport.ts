@@ -1,4 +1,3 @@
-import * as http from "node:http";
 import {
   aesDecrypt,
   aesEncrypt,
@@ -6,109 +5,18 @@ import {
   generateAesKeyPair,
   generateAesLoginHash,
 } from "./crypto.js";
+import { httpPost } from "./http.js";
+import {
+  AuthError,
+  parseSessionCookie,
+  parseTimeoutCookie,
+} from "./transport-utils.js";
 import type { AesSessionState, KasaCredentials } from "./types.js";
 
 const DEFAULT_TIMEOUT = 10_000;
 const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hour (conservative)
 
 const DEFAULT_CREDENTIALS: KasaCredentials = { username: "", password: "" };
-
-interface HttpResponse {
-  statusCode: number;
-  headers: http.IncomingHttpHeaders;
-  body: Buffer;
-}
-
-function httpPost(
-  url: string,
-  body: Buffer | string,
-  headers: Record<string, string>,
-  timeoutMs: number,
-): Promise<HttpResponse> {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
-    const reqBody = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
-
-    const req = http.request(
-      {
-        hostname: parsed.hostname,
-        port: parsed.port || 80,
-        path: parsed.pathname + parsed.search,
-        method: "POST",
-        headers: {
-          ...headers,
-          "Content-Length": String(reqBody.length),
-        },
-        timeout: timeoutMs,
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (chunk: Buffer) => chunks.push(chunk));
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode ?? 0,
-            headers: res.headers,
-            body: Buffer.concat(chunks),
-          });
-        });
-        res.on("error", reject);
-      },
-    );
-
-    req.on("error", reject);
-    req.on("timeout", () => {
-      req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms`));
-    });
-
-    req.write(reqBody);
-    req.end();
-  });
-}
-
-/**
- * Parse TP_SESSIONID from Set-Cookie header(s).
- *
- * The device may return one or more Set-Cookie values. We look for
- * TP_SESSIONID or SESSIONID and return the raw cookie string suitable
- * for sending back in a Cookie header.
- */
-function parseSessionCookie(headers: http.IncomingHttpHeaders): string | undefined {
-  const raw = headers["set-cookie"];
-  if (!raw) return undefined;
-
-  const cookies = Array.isArray(raw) ? raw : [raw];
-  for (const cookie of cookies) {
-    const match = cookie.match(/(?:TP_SESSIONID|SESSIONID)=([^;]+)/i);
-    if (match) {
-      return `TP_SESSIONID=${match[1]}`;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Parse the TIMEOUT value from Set-Cookie headers (seconds).
- */
-function parseTimeoutCookie(headers: http.IncomingHttpHeaders): number | undefined {
-  const raw = headers["set-cookie"];
-  if (!raw) return undefined;
-
-  const cookies = Array.isArray(raw) ? raw : [raw];
-  for (const cookie of cookies) {
-    const match = cookie.match(/TIMEOUT=(\d+)/i);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-  }
-  return undefined;
-}
-
-class AuthError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "AuthError";
-  }
-}
 
 const AES_COMMON_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
