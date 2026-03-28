@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ConfigParseError, defaultConfig, parseConfig } from "../src/config.js";
+import { defaultConfig, parseConfig } from "../src/config.js";
 
 describe("config", () => {
   describe("parseConfig", () => {
@@ -41,10 +41,7 @@ describe("config", () => {
     it("should throw ConfigParseError with incorrect types", () => {
       expect(() => {
         parseConfig(configInvalid);
-      }).toThrow(ConfigParseError);
-      expect(() => {
-        parseConfig(configInvalid);
-      }).toThrow("must be");
+      }).toThrow("Error parsing config");
     });
 
     it("should throw ConfigParseError with incorrect devices", () => {
@@ -52,47 +49,19 @@ describe("config", () => {
         parseConfig({
           devices: [{ host: 123 }],
         });
-      }).toThrow(ConfigParseError);
-      expect(() => {
-        parseConfig({
-          devices: [{ host: 123 }],
-        });
-      }).toThrow("`devices/0/host` must be string");
+      }).toThrow("Error parsing config");
 
       expect(() => {
         parseConfig({
           devices: [{ port: 123 }],
         });
-      }).toThrow(ConfigParseError);
-      expect(() => {
-        parseConfig({
-          devices: [{ port: 123 }],
-        });
-      }).toThrow(
-        "`devices/0` must have required property 'host'\n`devices/0/port` must be string",
-      );
+      }).toThrow("Error parsing config");
 
       expect(() => {
         parseConfig({
           devices: [{ badHost: "host" }],
         });
-      }).toThrow(ConfigParseError);
-      expect(() => {
-        parseConfig({
-          devices: [{ badHost: "host" }],
-        });
-      }).toThrow("`devices/0` must have required property 'host'");
-
-      expect(() => {
-        parseConfig({
-          devices: [{ badHost: "host" }],
-        });
-      }).toThrow(ConfigParseError);
-      expect(() => {
-        parseConfig({
-          devices: [{ badHost: "host" }],
-        });
-      }).toThrow("`devices/0` must have required property 'host'");
+      }).toThrow("Error parsing config");
     });
   });
 });

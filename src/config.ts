@@ -1,177 +1,38 @@
-import type { ErrorObject as AjvErrorObject } from "ajv";
-import AjvModule from "ajv";
-import addFormatsModule from "ajv-formats";
-import configSchema from "../config.schema.json" with { type: "json" };
-import { isObjectLike } from "./util/types.js";
+import { z } from "zod";
 
-const Ajv = AjvModule.default;
-const addFormats = addFormatsModule.default;
+const deviceConfigSchema = z.object({
+  host: z.string(),
+  port: z.number().optional(),
+});
 
-export class ConfigParseError extends Error {
-  /**
-   * Set by `Error.captureStackTrace`
-   */
-  readonly stack = "";
-
-  constructor(
-    message: string,
-    readonly errors?:
-      | AjvErrorObject<string, Record<string, unknown>, unknown>[]
-      | null
-      | undefined,
-  ) {
-    super(message);
-
-    // remove leading / from dataPath
-    const errorsAsString =
-      errors != null
-        ? errors
-            .map((e) => {
-              let msg = `\`${e.instancePath.replace(/^\//, "")}\` ${e.message}`;
-              if ("allowedValues" in e.params) {
-                msg += `. Allowed values: ${JSON.stringify(e.params.allowedValues)}`;
-              }
-              return msg;
-            })
-            .join("\n")
-        : "";
-
-    this.name = "ConfigParseError";
-    if (errorsAsString === "") {
-      this.message = message;
-    } else {
-      this.message = `${message}:\n${errorsAsString}`;
-    }
-
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
-export interface DeviceConfigInput {
-  host: string;
-  port?: number | undefined;
-}
-export interface TplinkSmarthomeConfigInput {
-  // ==================
+const configInputSchema = z.object({
   // HomeKit
-  // ------------------
-  /**
-   * Adds energy monitoring characteristics viewable in Eve app
-   * plug: Amperes, KilowattHours, VoltAmperes, Volts, Watts
-   * bulb: Watts
-   * @defaultValue true
-   */
-  addCustomCharacteristics?: boolean;
-  /**
-   * How often to check device energy monitoring the background (seconds). Set to 0 to disable.
-   * @defaultValue 20
-   */
-  emeterPollingInterval?: number;
-  /**
-   * (Watts) For plugs that support energy monitoring (e.g. HS110), min power draw for OutletInUse
-   * @defaultValue 0
-   */
-  inUseThreshold?: number;
-  /**
-   * Matching models are created in HomeKit as a Switch instead of an Outlet
-   * @defaultValue ['HS200', 'HS210']
-   */
-  switchModels?: Array<string>;
+  addCustomCharacteristics: z.boolean().optional(),
+  emeterPollingInterval: z.number().optional(),
+  inUseThreshold: z.number().optional(),
+  switchModels: z.array(z.string()).optional(),
 
-  // ==================
   // Discovery
-  // ------------------
-  /**
-   * port to bind udp socket
-   */
-  discoveryPort?: number;
-  /**
-   * Broadcast Address. If discovery is not working tweak to match your subnet, eg: 192.168.0.255
-   * @defaultValue '255.255.255.255'
-   */
-  broadcast?: string;
-  /**
-   * (seconds) How often to check device status in the background
-   * @defaultValue 10
-   */
-  pollingInterval?: number;
-  /**
-   * ["plug", "bulb"] to find all TPLink device types or ["plug"] / ["bulb"] for only plugs or bulbs
-   * @defaultValue ["plug", "bulb"]
-   */
-  deviceTypes?: Array<"plug" | "bulb">;
-  /**
-   * Allow-list of MAC addresses to include. If specified will ignore other devices.
-   * MAC Addresses are normalized, special characters are removed and made uppercase for comparison.
-   * Supports glob-style patterns
-   */
-  macAddresses?: Array<string>;
-  /**
-   * Deny-list of MAC addresses to exclude.
-   * MAC Addresses are normalized, special characters are removed and made uppercase for comparison.
-   * Supports glob-style patterns
-   */
-  excludeMacAddresses?: Array<string>;
-  /**
-   * Manual list of devices (see "Manually Specifying Devices" section below)
-   */
-  devices?: Array<DeviceConfigInput>;
+  discoveryPort: z.number().optional(),
+  broadcast: z.string().optional(),
+  pollingInterval: z.number().optional(),
+  deviceTypes: z.array(z.enum(["plug", "bulb"])).optional(),
+  macAddresses: z.array(z.string()).optional(),
+  excludeMacAddresses: z.array(z.string()).optional(),
+  devices: z.array(deviceConfigSchema).optional(),
 
-  // ==================
-  // Advanced Settings
-  // ------------------
-  /**
-   * (seconds) communication timeout
-   * @defaultValue 15
-   */
-  timeout?: number;
-  /**
-   * Use 'tcp' or 'udp' for device communication. Discovery will always use 'udp'
-   */
-  transport?: "tcp" | "udp";
-  /**
-   * (milliseconds) The time to wait to combine similar commands for a device before sending a command to a device
-   * @defaultValue 100
-   */
-  waitTimeUpdate?: number;
-  /**
-   * When true, sets the device port to the port the device used when responding to the discovery ping.
-   * When false, always uses default port (9999).
-   * You probably don't want to change this.
-   */
-  devicesUseDiscoveryPort?: boolean;
+  // Advanced
+  timeout: z.number().optional(),
+  transport: z.enum(["tcp", "udp"]).optional(),
+  waitTimeUpdate: z.number().optional(),
+  devicesUseDiscoveryPort: z.boolean().optional(),
 
-  // ==================
-  // Kasa Account (for KLAP/AES devices)
-  // ------------------
-  /**
-   * Kasa/TP-Link account email. Required for newer devices using KLAP v2 or AES protocol.
-   */
-  kasaUsername?: string;
-  /**
-   * Kasa/TP-Link account password. Required for newer devices using KLAP v2 or AES protocol.
-   */
-  kasaPassword?: string;
-}
+  // Kasa Account
+  kasaUsername: z.string().optional(),
+  kasaPassword: z.string().optional(),
+});
 
-type TplinkSmarthomeConfigDefault = {
-  addCustomCharacteristics: boolean;
-  emeterPollingInterval: number;
-  inUseThreshold: number;
-  switchModels: Array<string>;
-
-  discoveryPort: number;
-  broadcast: string;
-  pollingInterval: number;
-  deviceTypes: Array<"plug" | "bulb">;
-  macAddresses?: Array<string>;
-  excludeMacAddresses?: Array<string>;
-  devices?: Array<{ host: string; port?: number | undefined }>;
-
-  timeout: number;
-  transport: "tcp" | "udp" | undefined;
-  waitTimeUpdate: number;
-  devicesUseDiscoveryPort: boolean;
-};
+export type TplinkSmarthomeConfigInput = z.infer<typeof configInputSchema>;
 
 export type TplinkSmarthomeConfig = {
   addCustomCharacteristics: boolean;
@@ -208,6 +69,26 @@ export type TplinkSmarthomeConfig = {
   };
 };
 
+type TplinkSmarthomeConfigDefault = {
+  addCustomCharacteristics: boolean;
+  emeterPollingInterval: number;
+  inUseThreshold: number;
+  switchModels: Array<string>;
+
+  discoveryPort: number;
+  broadcast: string;
+  pollingInterval: number;
+  deviceTypes: Array<"plug" | "bulb">;
+  macAddresses?: Array<string>;
+  excludeMacAddresses?: Array<string>;
+  devices?: Array<{ host: string; port?: number | undefined }>;
+
+  timeout: number;
+  transport: "tcp" | "udp" | undefined;
+  waitTimeUpdate: number;
+  devicesUseDiscoveryPort: boolean;
+};
+
 export const defaultConfig: TplinkSmarthomeConfigDefault = {
   addCustomCharacteristics: true,
   emeterPollingInterval: 20,
@@ -228,72 +109,15 @@ export const defaultConfig: TplinkSmarthomeConfigDefault = {
   devicesUseDiscoveryPort: false,
 };
 
-function isArrayOfStrings(value: unknown): value is Array<string> {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
-}
-
-function isDeviceConfigInput(value: unknown): value is DeviceConfigInput {
-  return (
-    isObjectLike(value) &&
-    "host" in value &&
-    typeof value.host === "string" &&
-    (!("port" in value) || typeof value.port === "number")
-  );
-}
-
-function isArrayOfDeviceConfigInput(value: unknown): value is Array<DeviceConfigInput> {
-  return Array.isArray(value) && value.every((item) => isDeviceConfigInput(item));
-}
-
-function isTplinkSmarthomeConfigInput(c: unknown): c is TplinkSmarthomeConfigInput {
-  return (
-    isObjectLike(c) &&
-    (!("addCustomCharacteristics" in c) ||
-      typeof c.addCustomCharacteristics === "boolean") &&
-    (!("emeterPollingInterval" in c) || typeof c.emeterPollingInterval === "number") &&
-    (!("inUseThreshold" in c) || typeof c.inUseThreshold === "number") &&
-    (!("switchModels" in c) || isArrayOfStrings(c.switchModels)) &&
-    (!("discoveryPort" in c) || typeof c.discoveryPort === "number") &&
-    (!("broadcast" in c) || typeof c.broadcast === "string") &&
-    (!("pollingInterval" in c) || typeof c.pollingInterval === "number") &&
-    (!("deviceTypes" in c) || isArrayOfStrings(c.deviceTypes)) &&
-    (!("macAddresses" in c) ||
-      isArrayOfStrings(c.macAddresses) ||
-      c.macAddresses === undefined) &&
-    (!("excludeMacAddresses" in c) ||
-      isArrayOfStrings(c.excludeMacAddresses) ||
-      c.excludeMacAddresses === undefined) &&
-    (!("devices" in c) ||
-      isArrayOfDeviceConfigInput(c.devices) ||
-      c.devices === undefined) &&
-    (!("timeout" in c) || typeof c.timeout === "number") &&
-    (!("transport" in c) ||
-      typeof c.transport === "string" ||
-      c.transport === undefined) &&
-    (!("waitTimeUpdate" in c) || typeof c.waitTimeUpdate === "number") &&
-    (!("kasaUsername" in c) ||
-      typeof c.kasaUsername === "string" ||
-      c.kasaUsername === undefined) &&
-    (!("kasaPassword" in c) ||
-      typeof c.kasaPassword === "string" ||
-      c.kasaPassword === undefined)
-  );
-}
-
 export function parseConfig(config: Record<string, unknown>): TplinkSmarthomeConfig {
-  const ajv = new Ajv({ allErrors: true });
-  addFormats(ajv);
-  ajv.addVocabulary(["placeholder", "titleMap"]);
-  const validate = ajv.compile(configSchema.schema);
-  const valid = validate(config);
-  if (!valid) throw new ConfigParseError("Error parsing config", validate.errors);
-
-  if (!isTplinkSmarthomeConfigInput(config))
-    throw new ConfigParseError("Error parsing config");
+  const result = configInputSchema.safeParse(config);
+  if (!result.success) {
+    throw new Error(`Error parsing config:\n${result.error.message}`);
+  }
 
   const c: TplinkSmarthomeConfigDefault & TplinkSmarthomeConfigInput = {
     ...defaultConfig,
-    ...config,
+    ...result.data,
   };
 
   const defaultSendOptions = {
