@@ -83,9 +83,3 @@ export function isObjectLike(candidate: unknown): candidate is Record<string, un
     typeof candidate === "function"
   );
 }
-
-export function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}

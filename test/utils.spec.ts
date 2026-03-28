@@ -1,9 +1,9 @@
+import { sleep } from "@micthiesen/mitools/async";
 import { Service } from "hap-nodejs";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
-
 import { deferAndCombine } from "../src/util/deferAndCombine.js";
 import { lookup } from "../src/util/homekit.js";
-import { delay, isObjectLike } from "../src/util/types.js";
+import { isObjectLike } from "../src/util/types.js";
 
 describe("utils", () => {
   describe("deferAndCombine", () => {
@@ -44,7 +44,7 @@ describe("utils", () => {
 
         const batchOne = Promise.all([deferredFn(), deferredFn(), deferredFn()]);
 
-        await delay(deferTime);
+        await sleep(deferTime);
         const batchTwo = Promise.all([deferredFn(), deferredFn()]);
 
         const resultsOne = await batchOne;

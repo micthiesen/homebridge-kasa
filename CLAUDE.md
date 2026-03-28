@@ -92,3 +92,14 @@ Tag format: `v{major}.{minor}.{patch}` (e.g., `v9.1.0`)
 - **Linter/formatter:** Biome (config extends `@micthiesen/mitools/biome.shared.json`)
 - **Tests:** Vitest. Tests live in `test/`, integration tests in `test/integration/`
 - **Build output:** `lib/` directory (compiled JS + declarations + source maps)
+- **After any code changes**, run `pnpm run check:write` to auto-fix formatting/import ordering before running lint or typecheck
+
+## mitools (`@micthiesen/mitools`)
+
+Personal utility library used as both a build-time and runtime dependency. Prefer mitools utilities over writing custom helpers when a good fit exists. Check what's available at `../mitools/src/` before reinventing. Good candidates: async patterns (retry, timeout, sleep, Result type), collection helpers (DefaultMap, BetterMap), and similar general-purpose utilities. Don't force usage where the built-in or existing code is already clear and concise.
+
+## Error Handling Preferences
+
+- Prefer `withRetry` from mitools for retry-with-backoff patterns. Use `shouldRetry` to scope retries to specific error types and `baseDelayMs: 0` when immediate retry is appropriate (e.g. re-handshake then retry).
+- Prefer `tryCatch` / `Result` from mitools when a function tries multiple fallback strategies (try A, fall back to B). This makes "expected failure" paths visually distinct from unexpected errors, avoiding bare `catch {}` blocks.
+- Use `withTimeout` from mitools to cap operation-level time on composed async work (e.g. a probe that makes several sequential HTTP requests), not just individual requests.

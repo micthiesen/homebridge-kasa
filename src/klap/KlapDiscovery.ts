@@ -9,6 +9,7 @@
 import * as crypto from "node:crypto";
 import { EventEmitter } from "node:events";
 import * as net from "node:net";
+import { tryCatch, withTimeout } from "@micthiesen/mitools/async";
 
 import { AesTransport } from "./AesTransport.js";
 import { httpPost } from "./http.js";
@@ -281,11 +282,16 @@ export class KlapDiscovery extends EventEmitter {
       // 2. Build candidate list
       const candidates = await this.buildCandidateList();
 
-      // 3. Probe each candidate (with concurrency limit)
+      // 3. Probe each candidate (with concurrency limit and per-probe timeout)
       const CONCURRENCY = 10;
+      const PROBE_TIMEOUT = this.timeout * 4;
       for (let i = 0; i < candidates.length; i += CONCURRENCY) {
         const batch = candidates.slice(i, i + CONCURRENCY);
-        await Promise.allSettled(batch.map((c) => this.probeCandidate(c.host, c.port)));
+        await Promise.allSettled(
+          batch.map((c) =>
+            withTimeout(this.probeCandidate(c.host, c.port), PROBE_TIMEOUT),
+          ),
+        );
       }
     } catch (err) {
       this.emit("error", err);
@@ -450,31 +456,25 @@ export class KlapDiscovery extends EventEmitter {
     transport: KlapTransport | AesTransport,
   ): Promise<DeviceSysinfo | undefined> {
     // Try legacy IOT: system.get_sysinfo
-    try {
+    const iotResult = await tryCatch(async () => {
       const response = (await transport.send({
         system: { get_sysinfo: {} },
       })) as { system?: { get_sysinfo?: DeviceSysinfo } };
+      return response?.system?.get_sysinfo;
+    });
+    if (iotResult.ok && iotResult.value?.deviceId) return iotResult.value;
 
-      const info = response?.system?.get_sysinfo;
-      if (info?.deviceId) {
-        return info;
-      }
-    } catch {
-      // Legacy command failed, will try SMART below
-    }
-
-    // Try SMART protocol: get_device_info
-    try {
+    // Fall back to SMART protocol: get_device_info
+    const smartResult = await tryCatch(async () => {
       const response = (await transport.send({
         method: "get_device_info",
       })) as { result?: Record<string, unknown> };
-
       if (response?.result && (response.result.device_id || response.result.deviceId)) {
         return smartInfoToSysinfo(response.result);
       }
-    } catch {
-      // Neither protocol worked
-    }
+      return undefined;
+    });
+    if (smartResult.ok && smartResult.value) return smartResult.value;
 
     return undefined;
   }

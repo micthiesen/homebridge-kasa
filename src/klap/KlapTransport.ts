@@ -1,3 +1,4 @@
+import { withRetry } from "@micthiesen/mitools/async";
 import {
   deriveKlapKeys,
   generateKlapAuthHash,
@@ -159,65 +160,67 @@ export class KlapTransport {
    * decrypts the response. Re-handshakes on auth errors (once).
    */
   async send(request: object): Promise<object> {
-    if (!this.session || Date.now() >= this.session.expiry) {
-      await this.handshake();
-    }
+    return await withRetry(
+      async () => {
+        if (!this.session || Date.now() >= this.session.expiry) {
+          await this.handshake();
+        }
 
-    const doSend = async (): Promise<object> => {
-      const session = this.session!;
-      const payload = Buffer.from(JSON.stringify(request), "utf-8");
+        const session = this.session!;
+        const payload = Buffer.from(JSON.stringify(request), "utf-8");
 
-      const { encryptedData, seq: newSeq } = klapEncrypt(
-        payload,
-        this.klapKey!,
-        this.klapIv!,
-        this.klapSig!,
-        session.sequenceNumber,
-      );
-
-      session.sequenceNumber = newSeq;
-
-      const resp = await httpPost(
-        `${this.baseUrl}/app/request?seq=${newSeq}`,
-        encryptedData,
-        {
-          "Content-Type": "application/octet-stream",
-          Cookie: session.cookie,
-        },
-        this.timeout,
-      );
-
-      if (resp.statusCode === 403) {
-        throw new AuthError(`KLAP request returned 403 from ${this.host}`);
-      }
-
-      if (resp.statusCode !== 200) {
-        throw new Error(
-          `KLAP request failed: ${this.host} responded with status ${resp.statusCode}`,
+        const { encryptedData, seq: newSeq } = klapEncrypt(
+          payload,
+          this.klapKey!,
+          this.klapIv!,
+          this.klapSig!,
+          session.sequenceNumber,
         );
-      }
 
-      const decrypted = klapDecrypt(
-        resp.body,
-        this.klapKey!,
-        this.klapIv!,
-        this.klapSig!,
-        newSeq,
-      );
+        session.sequenceNumber = newSeq;
 
-      return JSON.parse(decrypted.toString("utf-8"));
-    };
+        const resp = await httpPost(
+          `${this.baseUrl}/app/request?seq=${newSeq}`,
+          encryptedData,
+          {
+            "Content-Type": "application/octet-stream",
+            Cookie: session.cookie,
+          },
+          this.timeout,
+        );
 
-    try {
-      return await doSend();
-    } catch (err) {
-      if (err instanceof AuthError) {
-        // Re-handshake once and retry
-        await this.handshake();
-        return await doSend();
-      }
-      throw err;
-    }
+        if (resp.statusCode === 403) {
+          throw new AuthError(`KLAP request returned 403 from ${this.host}`);
+        }
+
+        if (resp.statusCode !== 200) {
+          throw new Error(
+            `KLAP request failed: ${this.host} responded with status ${resp.statusCode}`,
+          );
+        }
+
+        const decrypted = klapDecrypt(
+          resp.body,
+          this.klapKey!,
+          this.klapIv!,
+          this.klapSig!,
+          newSeq,
+        );
+
+        return JSON.parse(decrypted.toString("utf-8"));
+      },
+      {
+        maxAttempts: 2,
+        baseDelayMs: 0,
+        shouldRetry: (err) => {
+          if (err instanceof AuthError) {
+            this.session = null;
+            return true;
+          }
+          return false;
+        },
+      },
+    );
   }
 
   /** Clear session state. */

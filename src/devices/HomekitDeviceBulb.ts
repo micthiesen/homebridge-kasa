@@ -1,3 +1,4 @@
+import { sleep } from "@micthiesen/mitools/async";
 import type { PlatformAccessory, Service } from "homebridge";
 import { Categories } from "homebridge";
 import type { TplinkSmarthomeConfig } from "../config.js";
@@ -13,7 +14,6 @@ import {
   miredToKelvin,
 } from "../util/homekit.js";
 import type { BulbLike } from "../util/types.js";
-import { delay } from "../util/types.js";
 import { HomekitDevice } from "./HomekitDevice.js";
 
 export class HomekitDeviceBulb extends HomekitDevice {
@@ -396,9 +396,9 @@ export class HomekitDeviceBulb extends HomekitDevice {
 
         for (let i = 0; i < 3; i += 1) {
           await this.setLightState({ on_off: 1, brightness: 100 });
-          await delay(500);
+          await sleep(500);
           await this.setLightState({ on_off: 1, brightness: 10 });
-          await delay(500);
+          await sleep(500);
         }
 
         this.setLightState(origLs);

@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
+import { sleep } from "@micthiesen/mitools/async";
 import type { PlugLike } from "../util/types.js";
-import { delay } from "../util/types.js";
 import { modelSupportsEmeter } from "./emeter.js";
 import type { DeviceProtocol } from "./protocol.js";
 import type { EmeterRealtime, PlugSysinfoLike } from "./types.js";
@@ -188,9 +188,9 @@ export class KlapPlug extends EventEmitter implements PlugLike {
     const origState = this.relayState;
     for (let i = 0; i < times; i += 1) {
       await this.setPowerState(!origState);
-      await delay(rate / 2);
+      await sleep(rate / 2);
       await this.setPowerState(origState);
-      await delay(rate / 2);
+      await sleep(rate / 2);
     }
     return true;
   }

@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
+import { sleep } from "@micthiesen/mitools/async";
 import type { BulbLike } from "../util/types.js";
-import { delay } from "../util/types.js";
 import { modelSupportsEmeter } from "./emeter.js";
 import type { DeviceProtocol } from "./protocol.js";
 import type { BulbSysinfoLike, EmeterRealtime, LightStateLike } from "./types.js";
@@ -221,9 +221,9 @@ export class KlapBulb extends EventEmitter implements BulbLike {
       await this.lighting.setLightState({
         on_off: origOnOff === 1 ? 0 : 1,
       });
-      await delay(rate / 2);
+      await sleep(rate / 2);
       await this.lighting.setLightState({ on_off: origOnOff });
-      await delay(rate / 2);
+      await sleep(rate / 2);
     }
     return true;
   }

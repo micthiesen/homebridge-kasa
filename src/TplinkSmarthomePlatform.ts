@@ -1,3 +1,4 @@
+import { DefaultMap } from "@micthiesen/mitools/collections";
 import chalk from "chalk";
 import type {
   API,
@@ -318,16 +319,10 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
     return `[${chalk.green(characteristicName)}]`;
   }
 
-  private get deviceAccessoriesByHost(): Map<string, HomekitDevice[]> {
-    const byHost: Map<string, HomekitDevice[]> = new Map();
+  private get deviceAccessoriesByHost(): DefaultMap<string, HomekitDevice[]> {
+    const byHost = new DefaultMap<string, HomekitDevice[]>(() => []);
     for (const [, tpLinkAccessory] of this.homekitDevicesById) {
-      const { host } = tpLinkAccessory.tplinkDevice;
-      const arr = byHost.get(host);
-      if (arr != null) {
-        arr.push(tpLinkAccessory);
-      } else {
-        byHost.set(host, [tpLinkAccessory]);
-      }
+      byHost.get(tpLinkAccessory.tplinkDevice.host).push(tpLinkAccessory);
     }
     return byHost;
   }

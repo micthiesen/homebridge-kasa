@@ -1,7 +1,8 @@
-import { defineConfig } from "vitest/config";
+import { baseVitestConfig } from "@micthiesen/mitools/vitest";
+import { mergeConfig } from "vitest/config";
 
-export default defineConfig({
+export default mergeConfig(baseVitestConfig, {
   test: {
-    exclude: ["**/node_modules/**", "**/build/**", "**/lib/**"],
+    exclude: ["**/build/**", "**/lib/**"],
   },
 });
