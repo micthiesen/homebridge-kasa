@@ -1,4 +1,4 @@
-import type * as http from "node:http";
+import type { HttpHeaders } from "./http.js";
 
 /**
  * Parse TP_SESSIONID from Set-Cookie header(s).
@@ -7,9 +7,7 @@ import type * as http from "node:http";
  * TP_SESSIONID or SESSIONID and return the raw cookie string suitable
  * for sending back in a Cookie header.
  */
-export function parseSessionCookie(
-  headers: http.IncomingHttpHeaders,
-): string | undefined {
+export function parseSessionCookie(headers: HttpHeaders): string | undefined {
   const raw = headers["set-cookie"];
   if (!raw) return undefined;
 
@@ -26,9 +24,7 @@ export function parseSessionCookie(
 /**
  * Parse the TIMEOUT value from Set-Cookie headers (seconds).
  */
-export function parseTimeoutCookie(
-  headers: http.IncomingHttpHeaders,
-): number | undefined {
+export function parseTimeoutCookie(headers: HttpHeaders): number | undefined {
   const raw = headers["set-cookie"];
   if (!raw) return undefined;
 
