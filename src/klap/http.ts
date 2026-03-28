@@ -9,6 +9,10 @@ const agent = new Agent({
   pipelining: 1,
 });
 
+export function closeHttpAgent(): void {
+  agent.close();
+}
+
 export type HttpHeaders = Record<string, string | string[] | undefined>;
 
 export interface HttpResponse {

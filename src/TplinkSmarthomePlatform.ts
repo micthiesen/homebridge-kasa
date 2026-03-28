@@ -20,6 +20,7 @@ import type { TplinkSmarthomeConfig } from "./config.js";
 import { parseConfig } from "./config.js";
 import { createHomekitDevice } from "./devices/createHomekitDevice.js";
 import type { HomekitDevice } from "./devices/HomekitDevice.js";
+import { closeHttpAgent } from "./klap/http.js";
 import type { KlapBulb } from "./klap/KlapBulb.js";
 import { KlapDiscovery } from "./klap/KlapDiscovery.js";
 import type { KlapPlug } from "./klap/KlapPlug.js";
@@ -53,6 +54,10 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
   private readonly legacyClient: Client;
 
   private readonly klapDiscovery: KlapDiscovery | undefined;
+
+  private shuttingDown = false;
+
+  private emeterTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     public readonly log: Logging,
@@ -238,10 +243,16 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
 
     this.api.on("shutdown", () => {
       this.log.debug("shutdown");
+      this.shuttingDown = true;
+      if (this.emeterTimer) {
+        clearTimeout(this.emeterTimer);
+        this.emeterTimer = null;
+      }
       this.legacyClient.stopDiscovery();
       if (this.klapDiscovery) {
         this.klapDiscovery.stop();
       }
+      closeHttpAgent();
     });
   }
 
@@ -261,15 +272,17 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       this.log.error(`Error in ${chalk.magenta("refreshEmeter()")}:`);
       this.log.error(String(err));
     } finally {
-      this.log.debug(
-        `Scheduling next run of ${chalk.magenta("refreshEmeter()")} in %d(ms)`,
-        this.config.emeterPollingInterval,
-      );
-      setTimeout(() => {
-        this.refreshEmeter().catch((err) => {
-          this.log.error("Unexpected error in refreshEmeter: %s", String(err));
-        });
-      }, this.config.emeterPollingInterval);
+      if (!this.shuttingDown) {
+        this.log.debug(
+          `Scheduling next run of ${chalk.magenta("refreshEmeter()")} in %d(ms)`,
+          this.config.emeterPollingInterval,
+        );
+        this.emeterTimer = setTimeout(() => {
+          this.refreshEmeter().catch((err) => {
+            this.log.error("Unexpected error in refreshEmeter: %s", String(err));
+          });
+        }, this.config.emeterPollingInterval);
+      }
     }
   }
 
