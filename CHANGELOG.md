@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.1.1](https://github.com/micthiesen/homebridge-kasa/compare/v9.1.0...v9.1.1) (2026-03-27)
+
+
+### Refactoring
+
+* **homekit-device:** extract plug category-specific setup to eliminate branching ([e9b06aa](https://github.com/micthiesen/homebridge-kasa/commit/e9b06aa))
+* **homekit-device:** replace _isSmart branching with polymorphic protocol strategy ([f60bab1](https://github.com/micthiesen/homebridge-kasa/commit/f60bab1))
+* **utils:** define PlugLike/BulbLike/TplinkDeviceLike interfaces to eliminate unsafe casts ([92f8524](https://github.com/micthiesen/homebridge-kasa/commit/92f8524))
+
 ## [9.1.0](https://github.com/micthiesen/homebridge-kasa/compare/v9.0.2...v9.1.0) (2026-03-27)
 
 
