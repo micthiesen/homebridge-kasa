@@ -1,7 +1,7 @@
 /**
- * Device discovery for KLAP v2 and AES protocol TP-Link Kasa devices.
+ * Device discovery for authenticated HTTP TP-Link Kasa devices.
  *
- * Discovers devices on port 80 by attempting KLAP/AES handshakes,
+ * Discovers devices on port 80 by attempting TPAP, KLAP, and AES handshakes,
  * then creates adapter instances compatible with the existing HomeKit
  * device layer.
  */
@@ -17,6 +17,7 @@ import { KlapBulb } from "./KlapBulb.js";
 import { KlapPlug } from "./KlapPlug.js";
 import { KlapTransport } from "./KlapTransport.js";
 import { IotProtocol, isSmartDevice, SmartProtocol } from "./protocol.js";
+import { TpapTransport } from "./TpapTransport.js";
 import type {
   BulbSysinfoLike,
   DeviceSysinfo,
@@ -33,7 +34,7 @@ type KlapDevice = KlapPlug | KlapBulb;
 
 interface DeviceRecord {
   device: KlapDevice;
-  transport: KlapTransport | AesTransport;
+  transport: KlapTransport | AesTransport | TpapTransport;
   protocol: TransportType;
   online: boolean;
   failCount: number;
@@ -108,7 +109,7 @@ function subnetIpsFromBroadcast(broadcast: string): string[] {
 }
 
 /**
- * Detect which protocol a device on port 80 speaks: KLAP v2 or AES.
+ * Detect which authenticated protocol a device on port 80 speaks.
  * Returns the detected protocol type, or null if neither responds.
  */
 async function detectProtocol(
@@ -117,7 +118,37 @@ async function detectProtocol(
   timeoutMs: number,
   debug?: (msg: string) => void,
 ): Promise<TransportType | null> {
-  // Try KLAP handshake1 first (POST /app/handshake1 with 16 random bytes)
+  // TPAP devices expose exact transport metadata through login/discover.
+  // Check first because some firmware serves a generic HTTP 200 response from
+  // the KLAP endpoint and returns error_code=1003 to an AES probe.
+  try {
+    const resp = await httpPost(
+      `http://${host}:${port}/`,
+      JSON.stringify({ method: "login", params: { sub_method: "discover" } }),
+      { "Content-Type": "application/json; charset=UTF-8" },
+      timeoutMs,
+    );
+    if (resp.statusCode === 200) {
+      const result = JSON.parse(resp.body.toString("utf-8"));
+      const advertisedScheme = String(
+        result?.result?.mgt_encrypt_schm?.encrypt_type ?? "",
+      ).toUpperCase();
+      if (
+        result?.error_code === 0 &&
+        result?.result?.tpap &&
+        (result.result.tpap_preferred === true || advertisedScheme === "TPAP")
+      ) {
+        debug?.(`${host}: detected TPAP protocol`);
+        return "tpap";
+      }
+    }
+  } catch (err) {
+    debug?.(
+      `${host}: TPAP probe failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  // Try KLAP handshake1 (POST /app/handshake1 with 16 random bytes)
   try {
     const seed = crypto.randomBytes(16);
     const resp = await httpPost(
@@ -126,10 +157,12 @@ async function detectProtocol(
       { "Content-Type": "application/octet-stream" },
       timeoutMs,
     );
-    if (resp.statusCode === 200) {
+    if (resp.statusCode === 200 && resp.body.length === 48) {
       return "klap";
     }
-    debug?.(`${host}: KLAP probe returned status ${resp.statusCode}`);
+    debug?.(
+      `${host}: KLAP probe returned status ${resp.statusCode}, length ${resp.body.length}`,
+    );
   } catch (err) {
     debug?.(
       `${host}: KLAP probe failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -422,7 +455,7 @@ export class KlapDiscovery extends EventEmitter {
 
   /**
    * Probe a single candidate IP:
-   * 1. Detect protocol (KLAP or AES)
+   * 1. Detect protocol (TPAP, KLAP, or AES)
    * 2. Create transport and complete handshake
    * 3. Fetch sysinfo to identify the device
    * 4. Create adapter and emit events
@@ -462,7 +495,7 @@ export class KlapDiscovery extends EventEmitter {
     host: string,
     port: number,
   ): Promise<{
-    transport: KlapTransport | AesTransport;
+    transport: KlapTransport | AesTransport | TpapTransport;
     protocol: TransportType;
   } | null> {
     const protocol = await detectProtocol(host, port, this.timeout, (msg) =>
@@ -478,12 +511,19 @@ export class KlapDiscovery extends EventEmitter {
             credentials: this.credentials,
             timeout: this.timeout,
           })
-        : new AesTransport({
-            host,
-            port,
-            credentials: this.credentials,
-            timeout: this.timeout,
-          });
+        : protocol === "tpap"
+          ? new TpapTransport({
+              host,
+              port,
+              credentials: this.credentials,
+              timeout: this.timeout,
+            })
+          : new AesTransport({
+              host,
+              port,
+              credentials: this.credentials,
+              timeout: this.timeout,
+            });
 
     try {
       await transport.handshake();
@@ -504,7 +544,7 @@ export class KlapDiscovery extends EventEmitter {
    * then falling back to the SMART protocol.
    */
   private async fetchSysinfo(
-    transport: KlapTransport | AesTransport,
+    transport: KlapTransport | AesTransport | TpapTransport,
   ): Promise<DeviceSysinfo | undefined> {
     // Try legacy IOT: system.get_sysinfo
     const iotResult = await tryCatch(async () => {
@@ -537,7 +577,7 @@ export class KlapDiscovery extends EventEmitter {
   private registerDevice(
     host: string,
     port: number,
-    transport: KlapTransport | AesTransport,
+    transport: KlapTransport | AesTransport | TpapTransport,
     protocol: TransportType,
     sysinfo: DeviceSysinfo,
   ): void {

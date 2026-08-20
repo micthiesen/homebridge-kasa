@@ -33,7 +33,7 @@ function registerDevice(
 ): DeviceEntry {
   const existing = devicesById.get(device.id);
   if (existing) {
-    // Update host in case it changed, prefer KLAP/AES if both found
+    // Update host in case it changed, prefer authenticated HTTP if both are found
     if (protocol === "klap/aes") existing.protocol = protocol;
     return existing;
   }
@@ -106,7 +106,7 @@ if (!email || !password) {
 
 if (!broadcast) {
   console.warn(
-    chalk.yellow("No KASA_BROADCAST in .env, KLAP/AES subnet scanning disabled"),
+    chalk.yellow("No KASA_BROADCAST in .env, KLAP/AES/TPAP subnet scanning disabled"),
   );
 }
 
@@ -132,7 +132,7 @@ legacyClient.on("device-offline", (device: TplinkDevice) => {
   if (entry) logDiscovery(`${chalk.red("OFFLINE")} #${entry.num} ${device.alias}`);
 });
 
-// KLAP/AES discovery (port 80)
+// KLAP/AES/TPAP discovery (port 80)
 const klapDiscovery = new KlapDiscovery({
   credentials: { username: email, password },
   broadcast,

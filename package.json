@@ -2,7 +2,7 @@
   "name": "homebridge-kasa",
   "displayName": "Homebridge Kasa",
   "version": "9.1.4",
-  "description": "Kasa smart home plugin for Homebridge. Supports devices using Legacy XOR, KLAP v2, and AES protocols.",
+  "description": "Kasa smart home plugin for Homebridge. Supports Legacy XOR, KLAP v2, AES, and TPAP protocols.",
   "keywords": [
     "homebridge-plugin",
     "homebridge",
@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@micthiesen/mitools": "^2",
+    "@noble/curves": "1.9.7",
     "chalk": "^5.4.1",
     "semver": "^7.7.4",
     "tplink-smarthome-api": "~5.0.0",

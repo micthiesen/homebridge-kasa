@@ -1,5 +1,5 @@
 /**
- * Shared types for the KLAP/AES transport module.
+ * Shared types for authenticated HTTP transports.
  */
 
 // -- Credentials --
@@ -11,7 +11,7 @@ export interface KasaCredentials {
 
 // -- Transport --
 
-export type TransportType = "klap" | "aes";
+export type TransportType = "klap" | "aes" | "tpap";
 
 // -- Session state --
 

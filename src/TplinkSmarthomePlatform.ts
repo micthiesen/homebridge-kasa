@@ -155,18 +155,18 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
   }
 
   private setupKlapDiscovery(): KlapDiscovery | undefined {
-    // KLAP/AES discovery for newer devices (port 80)
+    // KLAP/AES/TPAP discovery for newer devices (port 80)
     // Only enabled when Kasa credentials are configured
     if (!this.config.kasaCredentials) {
       this.log.info(
-        "No Kasa credentials configured. Newer devices using KLAP/AES protocol will not be discovered. " +
+        "No Kasa credentials configured. Newer devices using KLAP/AES/TPAP protocols will not be discovered. " +
           "Set kasaUsername and kasaPassword in config to enable.",
       );
       return undefined;
     }
 
     this.log.info(
-      "Kasa credentials configured, enabling KLAP/AES discovery for newer devices",
+      "Kasa credentials configured, enabling KLAP/AES/TPAP discovery for newer devices",
     );
 
     const klapDiscovery = new KlapDiscovery({
@@ -241,7 +241,7 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
         },
       });
 
-      // Start KLAP/AES discovery alongside legacy (if credentials configured)
+      // Start KLAP/AES/TPAP discovery alongside legacy (if credentials configured)
       if (this.klapDiscovery) {
         this.klapDiscovery.start();
       }

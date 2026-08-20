@@ -141,7 +141,7 @@
       "kasaUsername": {
         "title": "Kasa Username",
         "type": "string",
-        "description": "Your TP-Link Kasa account email. Required to discover newer devices (e.g. KP125M, firmware-updated HS103) that use the KLAP/AES protocol.",
+        "description": "Your TP-Link Kasa account email. Required to discover newer devices (e.g. KP125M, firmware-updated HS103) that use the KLAP/AES/TPAP protocols.",
         "placeholder": "you@example.com"
       },
       "kasaPassword": {
@@ -178,7 +178,7 @@
     {
       "type": "fieldset",
       "title": "Kasa Account (Optional)",
-      "description": "Required for newer devices that use the KLAP/AES protocol (e.g. KP125M, firmware-updated HS103). Without credentials, only legacy devices on port 9999 will be discovered.",
+      "description": "Required for newer devices that use the KLAP/AES/TPAP protocols (e.g. KP125M, firmware-updated HS103). Without credentials, only legacy devices on port 9999 will be discovered.",
       "expandable": true,
       "items": [
         "kasaUsername",

@@ -13,6 +13,7 @@ Originally forked from [plasticrake/homebridge-tplink-smarthome](https://github.
 - **Legacy XOR** - UDP/TCP on port 9999 (classic Kasa devices)
 - **KLAP v2** - HTTP-based with AES-encrypted sessions (newer firmware)
 - **AES** - HTTP-based with AES-CBC via RSA handshake (Tapo-protocol devices)
+- **TPAP** - HTTP-based with SPAKE2+ authentication (recent KP125M firmware)
 
 ## Models Supported
 
@@ -72,7 +73,7 @@ If you only have older Kasa devices that haven't been firmware-updated, no crede
 
 #### With Kasa credentials (recommended)
 
-Newer devices (e.g. KP125M) and firmware-updated devices (e.g. HS103 with recent firmware) use the KLAP v2 protocol and require your Kasa account credentials to be discovered. Without credentials, only legacy devices on port 9999 will be found.
+Newer devices (e.g. KP125M) and firmware-updated devices (e.g. HS103 with recent firmware) use authenticated KLAP, AES, or TPAP protocols and require your Kasa account credentials to be discovered. Without credentials, only legacy devices on port 9999 will be found.
 
 ```json
 "platforms": [{
@@ -128,7 +129,7 @@ Devices that support energy monitoring (HS110, etc) will have extra characterist
 This plugin discovers devices using two methods:
 
 - **Legacy UDP broadcast** (port 9999) for older devices. This is also how the Kasa app finds older devices.
-- **KLAP v2 subnet scan** (port 80) for newer/updated devices. Requires `kasaUsername` and `kasaPassword` to be configured. The plugin scans your subnet for devices speaking the KLAP v2 protocol, which newer firmware and models like the KP125M use.
+- **Authenticated HTTP subnet scan** (port 80) for newer/updated devices using KLAP v2, AES, or TPAP. Requires `kasaUsername` and `kasaPassword` to be configured. This includes Matter-capable models like the KP125M.
 
 Try setting the `broadcast` configuration to your subnet broadcast address (e.g. `192.168.1.255`) if you're having discovery issues. This is used by both discovery methods. Some users have reported that rebooting their router or changing some router settings have fixed discovery issues.
 
@@ -168,3 +169,5 @@ You can remove them by running:
 ## Credits
 
 Thanks to George Georgovassilis and Thomas Baust for [reverse engineering the HS1XX protocol](https://blog.georgovassilis.com/2016/05/07/controlling-the-tp-link-hs100-wi-fi-smart-plug/).
+
+TPAP support is based on protocol research and implementations from [python-kasa](https://github.com/python-kasa/python-kasa/pull/1592) and the MIT-licensed [ioBroker.tapo](https://github.com/TA2k/ioBroker.tapo) project.
