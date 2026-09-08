@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find /Users/michael/Code/homebridge-tplink-smarthome -maxdepth 2 -type f \\\\\\(-name eslint* -o -name prettier* -o -name .editorconfig -o -name tsconfig* -o -name package.json \\\\\\) ! -path */node_modules/*)"
-    ]
-  }
-}
