@@ -48,7 +48,6 @@ describe("TplinkSmarthomePlatform", () => {
         it("should add platformAccessory to #configuredAccessories", () => {
           platform.configureAccessory(platformAccessory as any);
 
-          // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
           const hbAccessories = platform["configuredAccessories"];
 
           expect(hbAccessories).toBeInstanceOf(Map);
@@ -63,7 +62,6 @@ describe("TplinkSmarthomePlatform", () => {
         const platformAccessory = platformAccessoriesIssues.get("CONTEXT_MISSING");
         platform.configureAccessory(platformAccessory as any);
 
-        // biome-ignore lint/complexity/useLiteralKeys: accessing private property in test
         const hbAccessories = platform["configuredAccessories"];
 
         expect(hbAccessories).toBeInstanceOf(Map);

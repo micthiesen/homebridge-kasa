@@ -33,7 +33,7 @@
   },
   {
     "label": "Format",
-    "command": "pnpm run format --write",
+    "command": "pnpm run format:write",
     "cwd": "$ZED_WORKTREE_ROOT",
     "reveal": "always",
     "hide": "on_success"

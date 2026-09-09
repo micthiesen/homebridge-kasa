@@ -10,9 +10,9 @@ Homebridge plugin (`homebridge-kasa`) for TP-Link Kasa smart home devices. Suppo
 
 ```bash
 pnpm run build         # Compile TypeScript (tsc)
-pnpm run lint          # Biome lint check
-pnpm run check:write   # Biome lint + auto-fix
-pnpm run format        # Biome format
+pnpm run lint          # oxlint check
+pnpm run check:write   # oxlint fixes + oxfmt
+pnpm run format        # oxfmt format check
 pnpm run typecheck     # Type check without emitting
 pnpm run test          # Full check: lint + typecheck + vitest
 pnpm run test:only     # Vitest only
@@ -86,7 +86,7 @@ Tag format: `v{major}.{minor}.{patch}` (e.g., `v9.1.0`)
 
 - **Package manager:** pnpm
 - **TypeScript:** strict mode, ES2022 target, Node16 modules
-- **Linter/formatter:** Biome (config extends `@micthiesen/mitools/biome.shared.json`)
+- **Linter/formatter:** oxlint and oxfmt (project-local configuration)
 - **Tests:** Vitest. Tests live in `test/`, integration tests in `test/integration/`
 - **Build output:** `lib/` directory (compiled JS + declarations + source maps)
 - **After any code changes**, run `pnpm run check:write` to auto-fix formatting/import ordering before running lint or typecheck

@@ -1,0 +1,26 @@
+{
+  "project": "homebridge-kasa",
+  "peers": {
+    "omni-notify": {
+      "path": "../omni-notify"
+    }
+  },
+  "resources": [
+    {
+      "path": ".oxlintrc.json",
+      "peers": [
+        "omni-notify"
+      ],
+      "mode": "judgment",
+      "notes": "Shared oxlint correctness baseline and oxfmt house formatting; project-specific generated-file and source ignores remain local."
+    },
+    {
+      "path": ".oxfmtrc.json",
+      "peers": [
+        "omni-notify"
+      ],
+      "mode": "judgment",
+      "notes": "Shared oxlint correctness baseline and oxfmt house formatting; project-specific generated-file and source ignores remain local."
+    }
+  ]
+}

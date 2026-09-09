@@ -49,10 +49,10 @@ export class KlapPlug extends EventEmitter implements PlugLike {
     this.transportType = transportType;
 
     // -- dimmer sub-object --
-    const self = this;
+    const getBrightness = (): number => this._sysInfo.brightness ?? 0;
     this.dimmer = {
       get brightness(): number {
-        return self._sysInfo.brightness ?? 0;
+        return getBrightness();
       },
       setBrightness: async (value: number): Promise<unknown> => {
         const response = await this.transport.send({

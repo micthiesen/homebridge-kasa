@@ -36,15 +36,17 @@
     "prebuild": "pnpm run clean",
     "build": "tsc --project tsconfig.source.json",
     "clean": "rm -rf lib/",
-    "check:write": "biome check --write .",
-    "format": "biome format .",
-    "lint": "biome check .",
+    "check:write": "oxlint --fix --report-unused-disable-directives . && oxfmt --write .",
+    "format": "oxfmt --check .",
+    "lint": "oxlint --report-unused-disable-directives .",
     "typecheck": "tsc --noEmit",
     "start": "homebridge --plugin-path .",
-    "pretest": "pnpm run lint && pnpm run typecheck",
+    "pretest": "pnpm run check && pnpm run typecheck",
     "test": "pnpm run test:only",
     "test:only": "vitest run",
-    "debug:script": "node --env-file=.env --import tsx/esm src/scripts/debug.ts"
+    "debug:script": "node --env-file=.env --import tsx/esm src/scripts/debug.ts",
+    "format:write": "oxfmt --write .",
+    "check": "pnpm run lint && pnpm run format"
   },
   "dependencies": {
     "@micthiesen/mitools": "^2",
@@ -55,14 +57,15 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.8",
     "@types/node": "^22.19.15",
     "@types/semver": "^7.7.1",
     "hap-nodejs": "~0.14.2",
     "homebridge": "~1.11.3",
     "tsx": "^4.21.0",
-    "typescript": "~6.0.2",
-    "vitest": "^4.1.1"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.1",
+    "oxlint": "1.80.0",
+    "oxfmt": "0.65.0"
   },
   "packageManager": "pnpm@10.28.2",
   "engines": {
