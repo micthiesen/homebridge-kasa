@@ -3,6 +3,10 @@
   "peers": {
     "omni-notify": {
       "path": "../omni-notify"
+    },
+    "homebridge-elgato-key-lights": {
+      "path": "../homebridge-elgato-key-lights",
+      "notes": "Shared Homebridge Node-version CI and npm trusted-publishing behavior. Preserve local commands, package identity, workflow triggers, and release policy."
     }
   },
   "resources": [
@@ -21,6 +25,14 @@
       ],
       "mode": "judgment",
       "notes": "Shared oxlint correctness baseline and oxfmt house formatting; project-specific generated-file and source ignores remain local."
+    },
+    {
+      "path": ".github/workflows/",
+      "peers": [
+        "homebridge-elgato-key-lights"
+      ],
+      "mode": "judgment",
+      "notes": "Shared Homebridge Node-version CI and npm trusted-publishing behavior. Preserve local commands, package identity, workflow triggers, and release policy."
     }
   ]
 }
