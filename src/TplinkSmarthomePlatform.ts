@@ -175,6 +175,9 @@ export class TplinkSmarthomePlatform implements DynamicPlatformPlugin {
       broadcast: this.config.discoveryOptions.broadcast,
       discoveryInterval: this.config.discoveryOptions.discoveryInterval,
       timeout: this.config.defaultSendOptions.timeout,
+      deviceTypes: this.config.discoveryOptions.deviceTypes,
+      macAddresses: this.config.discoveryOptions.macAddresses,
+      excludeMacAddresses: this.config.discoveryOptions.excludeMacAddresses,
     });
 
     klapDiscovery.on("device-new", (device: KlapPlug | KlapBulb) => {

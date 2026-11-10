@@ -17,6 +17,7 @@ import { KlapBulb } from "./KlapBulb.js";
 import { KlapPlug } from "./KlapPlug.js";
 import { KlapTransport } from "./KlapTransport.js";
 import { IotProtocol, isSmartDevice, SmartProtocol } from "./protocol.js";
+import { macMatches } from "../util/mac.js";
 import { TpapTransport } from "./TpapTransport.js";
 import type {
   BulbSysinfoLike,
@@ -46,6 +47,9 @@ interface DiscoveryOptions {
   broadcast?: string;
   discoveryInterval: number;
   timeout?: number;
+  deviceTypes?: Array<"plug" | "bulb">;
+  macAddresses?: string[];
+  excludeMacAddresses?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +252,9 @@ export class KlapDiscovery extends EventEmitter {
   private readonly broadcast: string | undefined;
   private readonly discoveryInterval: number;
   private readonly timeout: number;
+  private readonly deviceTypes: Array<"plug" | "bulb">;
+  private readonly macAddresses: string[];
+  private readonly excludeMacAddresses: string[];
 
   private readonly knownDevices: Map<string, DeviceRecord> = new Map();
   private intervalTimer: ReturnType<typeof setInterval> | null = null;
@@ -263,6 +270,27 @@ export class KlapDiscovery extends EventEmitter {
     this.broadcast = options.broadcast;
     this.discoveryInterval = options.discoveryInterval;
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
+    this.deviceTypes = options.deviceTypes ?? [];
+    this.macAddresses = options.macAddresses ?? [];
+    this.excludeMacAddresses = options.excludeMacAddresses ?? [];
+  }
+
+  /**
+   * Apply the user's device filters with the same semantics as the legacy
+   * client: an empty list means no restriction. Returns why the device is
+   * filtered out, or null when it is allowed.
+   */
+  private filterReason(deviceClass: "plug" | "bulb", mac: string): string | null {
+    if (this.deviceTypes.length > 0 && !this.deviceTypes.includes(deviceClass)) {
+      return `device type '${deviceClass}' is not in deviceTypes`;
+    }
+    if (this.macAddresses.length > 0 && !macMatches(mac, this.macAddresses)) {
+      return "MAC address is not in macAddresses";
+    }
+    if (macMatches(mac, this.excludeMacAddresses)) {
+      return "MAC address is in excludeMacAddresses";
+    }
+    return null;
   }
 
   /**
@@ -589,6 +617,23 @@ export class KlapDiscovery extends EventEmitter {
           `Unrecognized device type '${sysinfo.type ?? sysinfo.mic_type}' ` +
             `for ${sysinfo.alias} (${sysinfo.model}) at ${host}`,
         ),
+      );
+      transport.close();
+      return;
+    }
+
+    // IOT bulbs and light strips report their MAC as mic_mac, not mac
+    const { mac, mic_mac, ethernet_mac } = sysinfo as Partial<
+      Record<"mac" | "mic_mac" | "ethernet_mac", string>
+    >;
+    const filterReason = this.filterReason(
+      deviceClass,
+      mac ?? mic_mac ?? ethernet_mac ?? "",
+    );
+    if (filterReason != null) {
+      this.emit(
+        "debug",
+        `${host}: skipping ${sysinfo.alias} (${sysinfo.model}): ${filterReason}`,
       );
       transport.close();
       return;
