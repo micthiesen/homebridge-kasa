@@ -401,7 +401,7 @@ export class HomekitDeviceBulb extends HomekitDevice {
           await sleep(500);
         }
 
-        this.setLightState(origLs);
+        await this.setLightState(origLs);
       } catch (err) {
         this.log.error(`identify error`);
         this.log.error(String(err));

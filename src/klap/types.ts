@@ -60,6 +60,8 @@ export interface BulbSysinfoLike extends DeviceSysinfo {
   is_dimmable?: 0 | 1;
   is_color?: 0 | 1;
   is_variable_color_temp?: 0 | 1;
+  /** LED segment count; present and non-zero only on light strips. */
+  length?: number;
 }
 
 // -- Light state --
