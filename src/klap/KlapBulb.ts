@@ -35,6 +35,42 @@ function getColorTempRange(model: string): { min: number; max: number } | null {
   return null;
 }
 
+// Matches tplink-smarthome-api's default for models missing from the table.
+const DEFAULT_COLOR_TEMP_RANGE = { min: 2700, max: 6500 };
+
+// Light strips report their LED segment count as `length`, and only answer
+// lighting commands on their own module.
+function isLightStrip(sysinfo: BulbSysinfoLike): boolean {
+  return (sysinfo.length ?? 0) > 0;
+}
+
+/**
+ * Devices answer a rejected command with HTTP 200 and an `err_code` on the
+ * module or the method, so without this check a failed command looks sent.
+ */
+function assertCommandAccepted(
+  response: unknown,
+  module: string,
+  method: string,
+): void {
+  const moduleResponse = (response as Record<string, unknown> | null)?.[module] as
+    | Record<string, unknown>
+    | undefined;
+  const methodResponse = moduleResponse?.[method] as
+    | Record<string, unknown>
+    | undefined;
+  for (const candidate of [moduleResponse, methodResponse]) {
+    const errCode = candidate?.err_code;
+    if (typeof errCode === "number" && errCode !== 0) {
+      const errMsg = candidate?.err_msg;
+      throw new Error(
+        `${module}.${method} rejected by device: err_code=${errCode}` +
+          (typeof errMsg === "string" ? ` (${errMsg})` : ""),
+      );
+    }
+  }
+}
+
 export class KlapBulb extends EventEmitter implements BulbLike {
   private _sysInfo: BulbSysinfoLike;
 
@@ -76,11 +112,16 @@ export class KlapBulb extends EventEmitter implements BulbLike {
     // -- lighting sub-object --
     this.lighting = {
       setLightState: async (state: Partial<LightStateLike>): Promise<true> => {
-        await this.transport.send({
-          "smartlife.iot.smartbulb.lightingservice": {
-            transition_light_state: state,
-          },
+        const strip = isLightStrip(this._sysInfo);
+        const module = strip
+          ? "smartlife.iot.lightStrip"
+          : "smartlife.iot.smartbulb.lightingservice";
+        const method = strip ? "set_light_state" : "transition_light_state";
+        const response = await this.transport.send({
+          // ignore_default matches what tplink-smarthome-api sends to strips.
+          [module]: { [method]: strip ? { ignore_default: 1, ...state } : state },
         });
+        assertCommandAccepted(response, module, method);
         // Merge into cached light_state
         const ls = this._sysInfo.light_state;
         if (state.on_off != null) ls.on_off = state.on_off;
@@ -173,7 +214,9 @@ export class KlapBulb extends EventEmitter implements BulbLike {
   }
 
   get colorTemperatureRange(): { min: number; max: number } | null {
-    return getColorTempRange(this._sysInfo.model);
+    const range = getColorTempRange(this._sysInfo.model);
+    if (range != null) return range;
+    return this._sysInfo.is_variable_color_temp === 1 ? DEFAULT_COLOR_TEMP_RANGE : null;
   }
 
   get supportsEmeter(): boolean {
