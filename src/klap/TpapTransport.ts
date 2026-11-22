@@ -545,7 +545,10 @@ export class TpapTransport {
   private isSessionError(error: unknown): boolean {
     return (
       error instanceof Error &&
-      (error.message.includes("error_code=-2203") ||
+      // The device answers a session token it no longer knows (expired, or
+      // lost in a device restart) with a bare HTTP 401, not a JSON error code.
+      (error.message.includes("status 401") ||
+        error.message.includes("error_code=-2203") ||
         error.message.includes("error_code=-40401") ||
         error.message.includes("error_code=-40404") ||
         error.message.includes("ECONNRESET"))

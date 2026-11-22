@@ -314,6 +314,41 @@ describe("TpapTransport secure session", () => {
     expect(sequences).toEqual([17, 18]);
   });
 
+  it("negotiates a new session when the device rejects the token with HTTP 401", async () => {
+    httpPost.mockImplementation(async (url: string, body: Buffer) => {
+      if (url.includes("stok=session-token")) {
+        return { statusCode: 401, headers: {}, body: Buffer.alloc(0) };
+      }
+      const { sequence, request } = decryptFrame(body);
+      return {
+        statusCode: 200,
+        headers: {},
+        body: encryptFrame(sequence, { error_code: 0, result: { request } }),
+      };
+    });
+    const transport = establishedTransport();
+    const handshake = vi.spyOn(transport, "handshake").mockImplementation(async () => {
+      Reflect.set(transport, "session", {
+        key: KEY,
+        baseNonce: BASE_NONCE,
+        sessionId: "fresh-token",
+        sequence: 40,
+      });
+    });
+
+    const response = await transport.send({ method: "get_emeter_data" });
+
+    expect(response).toEqual({
+      error_code: 0,
+      result: { request: { method: "get_emeter_data" } },
+    });
+    expect(handshake).toHaveBeenCalledTimes(1);
+    expect(httpPost.mock.calls.map(([url]) => url)).toEqual([
+      "http://device.test:80/stok=session-token/ds",
+      "http://device.test:80/stok=fresh-token/ds",
+    ]);
+  });
+
   it("rejects unencrypted success responses", async () => {
     httpPost.mockResolvedValue({
       statusCode: 200,
